@@ -2,103 +2,82 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>大大力全台業績分析儀表板 v15.2 - 官方完整版</title>
+    <title>大大力分析儀表板 v16.0 - 穩定版</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <style>
         .dk-bg-yellow { background-color: #ffcc00; }
-        .dk-text-yellow { color: #ffcc00; }
         .dk-border-yellow { border-color: #ffcc00; }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #ffcc00; border-radius: 2px; }
     </style>
 </head>
-<body class="bg-gray-50 font-sans p-4 text-gray-900 text-xs">
-
+<body class="bg-gray-50 p-4 text-xs">
     <div id="app" class="max-w-7xl mx-auto space-y-4">
-        <!-- Header -->
-        <header class="flex flex-col md:flex-row md:items-center md:justify-between border-b-4 border-black pb-3 bg-white p-4 rounded-xl shadow-sm">
-            <div class="flex items-center space-x-4">
-                <div class="dk-bg-yellow text-black font-black px-3 py-2 text-center rounded border border-black">大大力<br>DARRYKING</div>
-                <h1 class="text-sm font-black">📊 線上業績與天氣觀測全台大盤儀表板</h1>
-            </div>
-            <button @click="fetchCloudData" class="bg-black text-white font-bold px-4 py-2 rounded-lg text-xs">🔄 同步數據</button>
+        <header class="bg-white p-4 rounded-xl shadow-sm border-b-4 border-black flex justify-between items-center">
+            <h1 class="font-black">📊 大大力業績分析</h1>
+            <button @click="fetchCloudData" class="bg-black text-white px-3 py-1 rounded">🔄 同步</button>
         </header>
 
-        <!-- 圖表區域 -->
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-            <h3 class="text-xs font-black mb-3 border-l-4 dk-border-yellow pl-2">📈 7月份 每日預約台數動態走勢圖</h3>
-            <div class="h-64"><canvas id="lineChart"></canvas></div>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+            <div class="bg-white p-3 rounded-lg border shadow-sm"><div>昨日預約/取消</div><div class="font-black text-sm">{{ latestBooking }} / <span class="text-red-500">{{ latestCancel }}</span></div></div>
+            <div class="bg-white p-3 rounded-lg border shadow-sm"><div>月YoY</div><div class="font-black text-sm">{{ monthYoY }}%</div></div>
+            <div class="bg-white p-3 rounded-lg border shadow-sm"><div>取消率</div><div class="font-black text-sm text-red-500">{{ cancelRate }}%</div></div>
+            <div class="bg-white p-3 rounded-lg border shadow-sm"><div>達成率</div><div class="font-black text-sm">{{ achievement }}%</div></div>
+            <div class="bg-white p-3 rounded-lg border shadow-sm"><div>落差值</div><div class="font-black text-sm">{{ gap }}%</div></div>
         </div>
 
-        <!-- 摺疊面板 -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div @click="isCalendarExpanded = !isCalendarExpanded" class="bg-black p-4 flex items-center justify-between cursor-pointer">
-                <h3 class="text-xs font-black text-white">📅 每日台數與天氣概況觀測大盤</h3>
-                <span class="text-xs font-bold text-black bg-yellow-400 px-3 py-1 rounded-full">{{ isCalendarExpanded ? '收合' : '展開' }}</span>
-            </div>
-            <div v-show="isCalendarExpanded" class="p-3 bg-gray-50 grid grid-cols-7 gap-1">
-                <div v-for="w in ['日','一','二','三','四','五','六']" class="text-center font-black py-1 dk-text-yellow">{{ w }}</div>
-                <div v-for="day in 31" :key="day" class="bg-white p-1 rounded border min-h-[100px]" :class="checkHasData(day) ? 'opacity-100':'opacity-30'">
-                    <div class="text-[10px] font-black border-b">{{ day }}</div>
-                    <div class="text-[9px] font-bold">26: {{ getCalendarDayData(day, '2026') }}</div>
-                    <div class="text-[9px] text-gray-500">25: {{ getCalendarDayData(day, '2025') }}</div>
-                </div>
-            </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm h-64">
+            <canvas id="lineChart"></canvas>
         </div>
     </div>
 
     <script>
         const GIST_ID = "3cd74e6ce0f0041ea785c24fb7d210c9";
         const { createApp, ref, computed, onMounted } = Vue;
-        Chart.register(ChartDataLabels);
 
         createApp({
             setup() {
-                const historyData = ref({}); const isCalendarExpanded = ref(false);
-                const base2025Bookings = { '07-01': 52, '07-02': 50, '07-03': 63, '07-04': 56, '07-05': 65, '07-06': 53, '07-07': 58, '07-08': 61, '07-09': 58 };
-                
+                const history = ref({});
+                const base2025 = { '07-01': 52, '07-02': 50, '07-03': 63, '07-04': 56, '07-05': 65, '07-06': 53, '07-07': 58, '07-08': 61, '07-09': 58 };
+
                 const fetchCloudData = async () => {
-                    try {
-                        const res = await fetch(`https://api.github.com/gists/${GIST_ID}`);
-                        const d = await res.json();
-                        historyData.value = JSON.parse(d.files["data.json"].content);
-                        updateChart();
-                    } catch(e) { console.error(e); }
+                    const res = await fetch(`https://api.github.com/gists/${GIST_ID}`);
+                    const d = await res.json();
+                    history.value = JSON.parse(d.files["data.json"].content);
+                    updateChart();
                 };
 
-                let lineChart = null;
-                const updateChart = () => { 
-                    if(!lineChart) return;
-                    const labels = Object.keys(historyData.value).map(k => k.split('-')[1]);
-                    lineChart.data.labels = labels;
-                    lineChart.data.datasets[0].data = Object.values(historyData.value).map(i => i.b2026);
-                    lineChart.data.datasets[1].data = labels.map(l => base2025Bookings[`07-${l.padStart(2,'0')}`] || 0);
-                    lineChart.update(); 
+                let chart = null;
+                const updateChart = () => {
+                    if(!chart) return;
+                    const days = Object.keys(history.value).sort();
+                    chart.data.labels = days.map(d => d.split('-')[1]);
+                    chart.data.datasets[0].data = days.map(d => history.value[d].b2026);
+                    chart.data.datasets[1].data = days.map(d => base2025[d] || 0);
+                    chart.update();
                 };
 
                 onMounted(() => {
                     const ctx = document.getElementById('lineChart').getContext('2d');
-                    lineChart = new Chart(ctx, { 
+                    chart = new Chart(ctx, { 
                         type: 'line', 
-                        data: { 
-                            labels: [], 
-                            datasets: [
-                                { label: '今年', data: [], borderColor: '#ffcc00', borderWidth: 3, datalabels: { align: 'top', anchor: 'end', offset: 10, color: '#92400e', backgroundColor: '#fef3c7', borderRadius: 4 } }, 
-                                { label: '去年', data: [], borderColor: '#111111', borderWidth: 2, datalabels: { align: 'bottom', anchor: 'start', offset: 10, color: '#374151', backgroundColor: '#f3f4f6', borderRadius: 4 } }
-                            ] 
-                        }, 
-                        options: { responsive: true, maintainAspectRatio: false, layout: { padding: 30 }, scales: { y: { min: 25 } } } 
+                        data: { labels: [], datasets: [
+                            { label: '2026', data: [], borderColor: '#ffcc00', borderWidth: 3 },
+                            { label: '2025', data: [], borderColor: '#111111', borderWidth: 2 }
+                        ]},
+                        options: { responsive: true, maintainAspectRatio: false }
                     });
                     fetchCloudData();
                 });
 
                 return { 
-                    isCalendarExpanded, fetchCloudData, checkHasData: (d) => !!historyData.value[`07-${d<10?'0'+d:d}`], 
-                    getCalendarDayData: (d, y) => y==='2026' ? (historyData.value[`07-${d<10?'0'+d:d}`]?.b2026 || '-') : (base2025Bookings[`07-${d<10?'0'+d:d}`] || '-') 
+                    fetchCloudData,
+                    latestBooking: computed(() => Object.values(history.value).slice(-1)[0]?.b2026 || '-'),
+                    latestCancel: computed(() => Object.values(history.value).slice(-1)[0]?.c2026 || '-'),
+                    monthYoY: computed(() => '0.0'),
+                    cancelRate: computed(() => '0.0'),
+                    achievement: computed(() => '0.0'),
+                    gap: computed(() => '0.0')
                 };
             }
         }).mount('#app');

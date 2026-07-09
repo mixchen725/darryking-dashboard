@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>大大力全台業績分析儀表板 v15.0 - 官方唯讀看板</title>
+    <title>大大力全台業績分析儀表板 v15.1 - 官方唯讀看板</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -19,7 +19,7 @@
 <body class="bg-gray-50 font-sans p-4 text-gray-900 text-xs">
 
     <div id="app" class="max-w-7xl mx-auto space-y-4">
-        <!-- Header -->
+        <!-- 頂部 Header -->
         <header class="flex flex-col md:flex-row md:items-center md:justify-between border-b-4 border-black pb-3 bg-white p-4 rounded-xl shadow-sm">
             <div class="flex items-center space-x-4">
                 <div class="dk-bg-yellow text-black font-black px-3 py-2 text-center leading-tight tracking-wider rounded border border-black shadow-sm">
@@ -27,50 +27,42 @@
                 </div>
                 <div><h1 class="text-sm font-black text-black">📊 線上業績與天氣觀測全台大盤儀表板</h1></div>
             </div>
-            <button @click="fetchCloudData" class="bg-black text-white font-bold px-4 py-2 rounded-lg text-xs">🔄 {{ isLoading ? '加載中...' : '同步最新數據' }}</button>
+            <button @click="fetchCloudData" class="bg-black text-white font-bold px-4 py-2 rounded-lg text-xs hover:bg-gray-800">
+                🔄 {{ isLoading ? '同步中...' : '同步最新數據' }}
+            </button>
         </header>
 
-        <!-- 數據五聯盤 -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-            <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200">
-                <span class="text-xs text-gray-400 font-bold">昨日預約 / 取消</span>
-                <div class="text-sm font-black mt-1">{{ latestDayBooking }} / <span class="text-red-600">{{ latestDayCancel }}</span> 台</div>
-            </div>
-            <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200">
-                <span class="text-xs text-gray-400 font-bold">月累計 YoY (截至{{ formattedLatestDay }})</span>
-                <div class="text-sm font-black mt-1" :class="monthYoY >= 0 ? 'text-green-600' : 'text-red-600'">{{ monthYoY }}%</div>
-            </div>
-            <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200">
-                <span class="text-xs text-gray-400 font-bold">大盤累計取消率</span>
-                <div class="text-sm font-black mt-1 text-red-500">{{ cancelRate }}%</div>
-            </div>
-            <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200">
-                <span class="text-xs text-gray-400 font-bold">昨日累計進度</span>
-                <div class="text-sm font-black mt-1">{{ yesterdayAchievementRate }}%</div>
-            </div>
-            <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200">
-                <span class="text-xs text-gray-400 font-bold">進度落差值</span>
-                <div class="text-sm font-black mt-1" :class="progressGapPercent >= 0 ? 'text-green-600' : 'text-red-600'">{{ progressGapPercent > 0 ? '+' : '' }}{{ progressGapPercent }}%</div>
-            </div>
+        <!-- 數據盤 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200"><span class="text-xs text-gray-400 font-bold">昨日預約 / 取消</span><div class="text-sm font-black mt-1">{{ latestDayBooking }} / <span class="text-red-600">{{ latestDayCancel }}</span> 台</div></div>
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200"><span class="text-xs text-gray-400 font-bold">月累計 YoY</span><div class="text-sm font-black mt-1" :class="monthYoY >= 0 ? 'text-green-600' : 'text-red-600'">{{ monthYoY }}%</div></div>
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200"><span class="text-xs text-gray-400 font-bold">大盤累計取消率</span><div class="text-sm font-black mt-1 text-red-500">{{ cancelRate }}%</div></div>
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200"><span class="text-xs text-gray-400 font-bold">昨日累計進度</span><div class="text-sm font-black mt-1">{{ yesterdayAchievementRate }}%</div></div>
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200"><span class="text-xs text-gray-400 font-bold">進度落差值</span><div class="text-sm font-black mt-1" :class="progressGapPercent >= 0 ? 'text-green-600' : 'text-red-600'">{{ progressGapPercent > 0 ? '+' : '' }}{{ progressGapPercent }}%</div></div>
         </div>
 
-        <!-- 圖表 -->
+        <!-- 優化後的走勢圖 -->
         <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-            <h3 class="text-xs font-black mb-3">📈 7月份 全台每日預約台數動態走勢圖</h3>
+            <h3 class="text-xs font-black text-black border-l-4 dk-border-yellow pl-2 mb-3">📈 7月份 全台每日預約台數動態走勢圖</h3>
             <div class="h-64"><canvas id="lineChart"></canvas></div>
         </div>
 
-        <!-- 月曆 (摺疊) -->
+        <!-- 摺疊面板 -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div @click="isCalendarExpanded = !isCalendarExpanded" class="bg-black p-4 flex items-center justify-between cursor-pointer">
-                <h3 class="text-xs font-black text-white">📅 7月份 每日台數與天氣概況觀測大盤</h3>
+            <div @click="isCalendarExpanded = !isCalendarExpanded" class="bg-black p-4 flex items-center justify-between cursor-pointer hover:bg-gray-800 transition-colors">
+                <h3 class="text-xs font-black text-white tracking-widest flex items-center">
+                    <span class="mr-2">📅</span> 7月份 每日台數與天氣概況觀測大盤
+                </h3>
                 <span class="text-xs font-bold text-black bg-yellow-400 px-3 py-1 rounded-full">{{ isCalendarExpanded ? '📁 收合大盤' : '📂 展開大盤' }}</span>
             </div>
-            <div v-show="isCalendarExpanded" class="p-3 bg-gray-50 grid grid-cols-7 gap-1">
-                <div v-for="w in ['日','一','二','三','四','五','六']" :key="w" class="text-center font-black py-1 dk-text-yellow">{{ w }}</div>
-                <div v-for="day in 31" :key="day" class="bg-white p-1 rounded border min-h-[100px]" :class="checkHasData(day) ? 'opacity-100':'opacity-30'">
-                    <div class="text-xs font-black border-b">{{ day }}</div>
-                    <div class="text-[10px]">{{ getCalendarDayData(day, '2026') }}</div>
+            <div v-show="isCalendarExpanded" class="p-3 border-t bg-gray-50">
+                <div class="grid grid-cols-7 gap-1 bg-gray-900 p-1.5 rounded-xl text-xs">
+                    <div v-for="w in ['日','一','二','三','四','五','六']" class="text-center font-black py-1 dk-text-yellow">{{ w }}</div>
+                    <div class="bg-gray-800 opacity-20 rounded-lg min-h-[120px]"></div><div class="bg-gray-800 opacity-20 rounded-lg min-h-[120px]"></div>
+                    <div v-for="day in 31" :key="day" class="bg-white p-1 rounded border min-h-[120px] flex flex-col justify-between" :class="checkHasData(day) ? 'opacity-100':'opacity-30'">
+                        <div class="text-xs font-black border-b">{{ day }}</div>
+                        <div class="text-[10px] font-bold">{{ getCalendarDayData(day) }}</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -84,49 +76,61 @@
         createApp({
             setup() {
                 const historyData = ref({}); const isLoading = ref(false); const isCalendarExpanded = ref(false);
-                const base2025Bookings = { '07-01': 52, '07-02': 50, '07-03': 63, '07-04': 56, '07-05': 65, '07-06': 53, '07-07': 58, '07-08': 61 };
-
+                
                 const fetchCloudData = async () => {
                     isLoading.value = true;
                     try {
-                        // 強制抓取 RAW 資料
                         const res = await fetch(`https://api.github.com/gists/${GIST_ID}`);
                         const d = await res.json();
-                        // 獲取第一個檔案的內容
                         const fileName = Object.keys(d.files)[0];
                         historyData.value = JSON.parse(d.files[fileName].content);
-                        console.log("數據同步成功");
-                    } catch(e) { console.error("同步失敗", e); }
+                    } catch(e) { console.error(e); }
                     finally { isLoading.value = false; updateChart(); }
                 };
 
-                // 計算邏輯
-                const latestKey = computed(() => Object.keys(historyData.value).sort().pop() || '07-01');
-                const latestDayInt = computed(() => parseInt(latestKey.value.substring(3)));
-                const latestDayBooking = computed(() => historyData.value[latestKey.value]?.b2026 ?? '-');
-                const latestDayCancel = computed(() => historyData.value[latestKey.value]?.c2026 ?? '-');
                 const totalOnlineBooking = computed(() => Object.values(historyData.value).reduce((a, b) => a + (b.b2026 || 0), 0));
                 const totalCancelCount = computed(() => Object.values(historyData.value).reduce((a, b) => a + (b.c2026 || 0), 0));
-                const yesterdayAchievementRate = computed(() => (totalOnlineBooking.value / 1600 * 100).toFixed(1));
-                const cancelRate = computed(() => totalOnlineBooking.value ? (totalCancelCount.value / totalOnlineBooking.value * 100).toFixed(1) : '0');
-                const monthYoY = computed(() => '0.0'); // 可再擴充
-                const progressGapPercent = computed(() => (parseFloat(yesterdayAchievementRate.value) - (latestDayInt.value/31*100)).toFixed(1));
-
+                const latestKey = computed(() => Object.keys(historyData.value).sort().pop() || '07-01');
+                
                 let lineChart = null;
-                const updateChart = () => {
+                const updateChart = () => { 
                     if(!lineChart) return;
-                    lineChart.data.labels = Object.keys(historyData.value);
+                    lineChart.data.labels = Object.keys(historyData.value).map(k => k.split('-')[1]);
                     lineChart.data.datasets[0].data = Object.values(historyData.value).map(i => i.b2026);
-                    lineChart.update();
+                    lineChart.update(); 
                 };
 
                 onMounted(() => {
-                    const ctx = document.getElementById('lineChart').getContext('2d');
-                    lineChart = new Chart(ctx, { type: 'line', data: { labels: [], datasets: [{ label: '今年預約', data: [], borderColor: '#ffcc00' }] }, options: { responsive: true, maintainAspectRatio: false } });
+                    const ctxL = document.getElementById('lineChart').getContext('2d');
+                    lineChart = new Chart(ctxL, { 
+                        type: 'line', 
+                        data: { 
+                            labels: [], 
+                            datasets: [{ 
+                                label: '今年預約', data: [], borderColor: '#ffcc00', borderWidth: 3, tension: 0.2,
+                                datalabels: { align: 'top', anchor: 'end', offset: 10, color: '#92400e', font: { weight: 'bold', size: 12 }, backgroundColor: '#fef3c7', borderRadius: 4, padding: 3 } 
+                            }] 
+                        }, 
+                        options: { 
+                            responsive: true, maintainAspectRatio: false, 
+                            plugins: { datalabels: { display: true } },
+                            layout: { padding: { top: 30, bottom: 30 } },
+                            scales: { y: { min: 25 } }
+                        } 
+                    });
                     fetchCloudData();
                 });
 
-                return { isLoading, isCalendarExpanded, latestDayBooking, latestDayCancel, latestLastYearDayBooking: ref(0), totalOnlineBooking, totalCancelCount, monthYoY, cancelRate, yesterdayAchievementRate, progressGapPercent, formattedLatestDay: computed(()=>`7/${latestDayInt.value}`), fetchCloudData, checkHasData: (d) => !!historyData.value[`07-${d<10?'0'+d:d}`], getCalendarDayData: (d, y) => historyData.value[`07-${d<10?'0'+d:d}`]?.b2026 || '' };
+                return { isLoading, isCalendarExpanded, 
+                    latestDayBooking: computed(() => historyData.value[latestKey.value]?.b2026 ?? '-'),
+                    latestDayCancel: computed(() => historyData.value[latestKey.value]?.c2026 ?? '-'),
+                    totalOnlineBooking, cancelRate: computed(() => totalOnlineBooking.value ? (totalCancelCount.value/totalOnlineBooking.value*100).toFixed(1) : '0'),
+                    yesterdayAchievementRate: computed(() => (totalOnlineBooking.value/1600*100).toFixed(1)),
+                    progressGapPercent: computed(() => (totalOnlineBooking.value/1600*100 - 30).toFixed(1)),
+                    formattedLatestDay: computed(() => latestKey.value),
+                    fetchCloudData, checkHasData: (d) => !!historyData.value[`07-${d<10?'0'+d:d}`],
+                    getCalendarDayData: (d) => historyData.value[`07-${d<10?'0'+d:d}`]?.b2026 || ''
+                };
             }
         }).mount('#app');
     </script>

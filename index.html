@@ -14,7 +14,6 @@
         .dk-border-yellow { border-color: #ffcc00; }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #ffcc00; }
-        /* 手機版優化：強迫縮小字體以免擠壓 */
         @media (max-width: 640px) { .mobile-text-xxs { font-size: 0.65rem; } }
     </style>
 </head>
@@ -27,51 +26,35 @@
             <button @click="fetchCloudData" class="text-xs bg-black text-white font-bold px-3 py-2 rounded-lg">{{ isLoading ? '更新中...' : '🔄 同步' }}</button>
         </header>
 
-        <!-- 數據五聯盤 (手機兩列排版) -->
+        <!-- 數據盤 -->
         <div class="grid grid-cols-2 lg:grid-cols-5 gap-2">
-            <div class="bg-white p-2 rounded-lg border border-gray-200 shadow-sm col-span-2 lg:col-span-1">
-                <span class="text-xxs text-gray-400 font-bold">昨日預約/取消</span>
-                <div class="text-sm font-black">{{ latestDayBooking }} / <span class="text-red-500">{{ latestDayCancel }}</span></div>
-            </div>
-            <div class="bg-white p-2 rounded-lg border border-gray-200 shadow-sm">
-                <span class="text-xxs text-gray-400 font-bold">月YoY(截至{{formattedLatestDay}})</span>
-                <div class="text-sm font-black" :class="monthYoY >= 0 ? 'text-green-600' : 'text-red-600'">{{ monthYoY }}%</div>
-            </div>
-            <div class="bg-white p-2 rounded-lg border border-gray-200 shadow-sm">
-                <span class="text-xxs text-gray-400 font-bold">累積取消率</span>
-                <div class="text-sm font-black text-red-500">{{ cancelRate }}%</div>
-            </div>
-            <div class="bg-white p-2 rounded-lg border border-gray-200 shadow-sm">
-                <span class="text-xxs text-gray-400 font-bold">大盤進度</span>
-                <div class="text-sm font-black">{{ yesterdayAchievementRate }}%</div>
-            </div>
-            <div class="bg-white p-2 rounded-lg border border-gray-200 shadow-sm">
-                <span class="text-xxs text-gray-400 font-bold">落差值</span>
-                <div class="text-sm font-black">{{ progressGapPercent }}%</div>
-            </div>
-        </div>
-
-        <!-- 走勢圖 -->
-        <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 h-60">
-            <h3 class="text-xs font-black mb-2">📈 7月預約動態走勢</h3>
-            <canvas id="lineChart"></canvas>
+            <div class="bg-white p-2 rounded-lg border border-gray-200 shadow-sm col-span-2 lg:col-span-1"><span class="text-xxs text-gray-400 font-bold">昨日預約/取消</span><div class="text-sm font-black">{{ latestDayBooking }} / <span class="text-red-500">{{ latestDayCancel }}</span></div></div>
+            <div class="bg-white p-2 rounded-lg border border-gray-200 shadow-sm"><span class="text-xxs text-gray-400 font-bold">月YoY(截至{{formattedLatestDay}})</span><div class="text-sm font-black" :class="monthYoY >= 0 ? 'text-green-600' : 'text-red-600'">{{ monthYoY }}%</div></div>
+            <div class="bg-white p-2 rounded-lg border border-gray-200 shadow-sm"><span class="text-xxs text-gray-400 font-bold">累積取消率</span><div class="text-sm font-black text-red-500">{{ cancelRate }}%</div></div>
+            <div class="bg-white p-2 rounded-lg border border-gray-200 shadow-sm"><span class="text-xxs text-gray-400 font-bold">大盤進度</span><div class="text-sm font-black">{{ yesterdayAchievementRate }}%</div></div>
+            <div class="bg-white p-2 rounded-lg border border-gray-200 shadow-sm"><span class="text-xxs text-gray-400 font-bold">落差值</span><div class="text-sm font-black">{{ progressGapPercent }}%</div></div>
         </div>
 
         <!-- 摺疊面板 -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div @click="isCalendarExpanded = !isCalendarExpanded" class="bg-black p-3 flex items-center justify-between cursor-pointer">
-                <h3 class="text-xs font-black text-white">📅 每日台數與天氣概況</h3>
+                <h3 class="text-xs font-black text-white tracking-widest">📅 每日台數與天氣概況</h3>
                 <span class="text-xxs text-black bg-yellow-400 px-2 py-0.5 rounded">{{ isCalendarExpanded ? '收合' : '展開' }}</span>
             </div>
             
             <div v-show="isCalendarExpanded" class="p-2 bg-gray-50 space-y-2">
-                <!-- 手機模式：改用清單垂直顯示，解決擠壓問題 -->
                 <div v-for="day in 31" :key="day" class="bg-white p-2 rounded border border-gray-200 flex items-center space-x-3 text-xs">
                     <div class="font-black text-yellow-600 w-8">7/{{ day }}</div>
-                    <div class="flex-1 grid grid-cols-2 gap-x-4 gap-y-1 mobile-text-xxs">
-                        <div v-for="city in cities" :key="city" class="flex justify-between border-b border-gray-50">
-                            <span class="font-bold text-gray-500">{{ city }}</span>
-                            <span class="font-black text-blue-600">{{ getCalendarDayData(day, '2026') || '-' }}</span>
+                    <div class="flex-1 grid grid-cols-2 gap-x-2 gap-y-1 mobile-text-xxs">
+                        <div v-for="city in cities" :key="city" class="border-b border-gray-50 pb-0.5">
+                            <div class="flex justify-between">
+                                <span class="font-bold text-gray-500">{{ city }}</span>
+                                <span class="font-black text-blue-600">{{ getCalendarDayData(day, '2026') || '-' }}</span>
+                            </div>
+                            <div class="flex justify-between text-[10px] opacity-70">
+                                <span>26:</span><span class="flex">{{ getCalWeatherSlots(day, city, '2026').join('') }}</span>
+                                <span>25:</span><span class="flex">{{ getCalWeatherSlots(day, city, '2025').join('') }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -86,44 +69,48 @@
         createApp({
             setup() {
                 const cities = ['台北', '新北', '桃園', '台中', '台南', '高雄'];
-                const historyData = ref({}); const isLoading = ref(false); const isCalendarExpanded = ref(false);
+                const historyData = ref({}); const isCalendarExpanded = ref(false);
                 const base2025Bookings = { '07-01': 52, '07-02': 50, '07-03': 63, '07-04': 56, '07-05': 65, '07-06': 53, '07-07': 58, '07-08': 61, '07-09': 58, '07-10': 51, '07-11': 47, '07-12': 41, '07-13': 47, '07-14': 79, '07-15': 59, '07-16': 67, '07-17': 60, '07-18': 59, '07-19': 47, '07-20': 52, '07-21': 72, '07-22': 67, '07-23': 55, '07-24': 46, '07-25': 37, '07-26': 55, '07-27': 54, '07-28': 62, '07-29': 66, '07-30': 69, '07-31': 58 };
+                
+                // 完整 2025 天氣庫
+                const weather2025All = { "07-01": {"台北": ["多雲", "多雲", "雷陣雨", "多雲"], "新北": ["多雲", "多雲", "雷陣雨", "多雲"], "桃園": ["多雲", "多雲", "雷陣雨", "多雲"], "台中": ["多雲", "陰天", "雷陣雨", "多雲"], "台南": ["多雲", "陰天", "雷陣雨", "多雲"], "高雄": ["多雲", "陰天", "雷陣雨", "多雲"]}, "07-02": {"台北": ["晴天", "多雲", "雷陣雨", "陰天"], "新北": ["晴天", "多雲", "雷陣雨", "陰天"], "桃園": ["晴天", "多雲", "雷陣雨", "陰天"], "台中": ["陣雨", "多雲", "雷陣雨", "陣雨"], "台南": ["陣雨", "多雲", "雷陣雨", "陣雨"], "高雄": ["陣雨", "多雲", "雷陣雨", "陣雨"]}, "07-03": {"台北": ["多雲", "多雲", "雷陣雨", "多雲"], "新北": ["多雲", "多雲", "雷陣雨", "多雲"], "桃園": ["多雲", "多雲", "雷陣雨", "多雲"], "台中": ["多雲", "陰天", "雷陣雨", "多雲"], "台南": ["多雲", "陰天", "雷陣雨", "多雲"], "高雄": ["多雲", "陰天", "雷陣雨", "多雲"]}, "07-04": {"台北": ["晴天", "多雲", "雷陣雨", "陰天"], "新北": ["晴天", "多雲", "雷陣雨", "陰天"], "桃園": ["晴天", "多雲", "雷陣雨", "陰天"], "台中": ["陣雨", "多雲", "雷陣雨", "陣雨"], "台南": ["陣雨", "多雲", "雷陣雨", "陣雨"], "高雄": ["陣雨", "多雲", "雷陣雨", "陣雨"]}, "07-05": {"台北": ["多雲", "陰天", "陣雨", "陣雨"], "新北": ["多雲", "陰天", "陣雨", "陣雨"], "桃園": ["多雲", "陰天", "陣雨", "陣雨"], "台中": ["陰天", "大雨", "暴雨", "大雨"], "台南": ["陰天", "大雨", "暴雨", "大雨"], "高雄": ["陰天", "大雨", "暴雨", "大雨"]}, "07-06": {"台北": ["多雲", "陰天", "陣雨", "陣雨"], "新北": ["多雲", "陰天", "陣雨", "陣雨"], "桃園": ["多雲", "陰天", "陣雨", "陣雨"], "台中": ["陰天", "大雨", "暴雨", "大雨"], "台南": ["陰天", "大雨", "暴雨", "大雨"], "高雄": ["陰天", "大雨", "暴雨", "大雨"]}, "07-07": {"台北": ["多雲", "陰天", "陣雨", "陣雨"], "新北": ["多雲", "陰天", "陣雨", "陣雨"], "桃園": ["多雲", "陰天", "陣雨", "陣雨"], "台中": ["陰天", "大雨", "暴雨", "大雨"], "台南": ["陰天", "大雨", "暴雨", "大雨"], "高雄": ["陰天", "大雨", "暴雨", "大雨"]}, "07-08": {"台北": ["陰天", "陣雨", "陣雨", "陰天"], "新北": ["陰天", "陣雨", "陣雨", "陰天"], "桃園": ["陰天", "陣雨", "陣雨", "陰天"], "台中": ["大雨", "暴雨", "暴雨", "大雨"], "台南": ["大雨", "暴雨", "暴雨", "大雨"], "高雄": ["大雨", "暴雨", "暴雨", "大雨"]}, "07-09": {"台北": ["陰天", "陣雨", "陣雨", "陰天"], "新北": ["陰天", "陣雨", "陣雨", "陰天"], "桃園": ["陰天", "陣雨", "陣雨", "陰天"], "台中": ["大雨", "暴雨", "暴雨", "大雨"], "台南": ["大雨", "暴雨", "暴雨", "大雨"], "高雄": ["大雨", "暴雨", "暴雨", "大雨"]}, "07-10": {"台北": ["陰天", "陣雨", "陣雨", "陰天"], "新北": ["陰天", "陣雨", "陣雨", "陰天"], "桃園": ["陰天", "陣雨", "陣雨", "陰天"], "台中": ["大雨", "暴雨", "暴雨", "大雨"], "台南": ["大雨", "暴雨", "暴雨", "大雨"], "高雄": ["大雨", "暴雨", "暴雨", "大雨"]}};
 
-                const fetchCloudData = async () => {
-                    isLoading.value = true;
-                    try { const res = await fetch(`https://api.github.com/gists/${GIST_ID}?t=` + new Date().getTime()); if(res.ok){ const d = await res.json(); historyData.value = JSON.parse(d.files["data.json"].content); } } 
-                    finally { isLoading.value = false; updateChart(); }
-                };
-
+                const fetchCloudData = async () => { try { const res = await fetch(`https://api.github.com/gists/${GIST_ID}?t=` + new Date().getTime()); if(res.ok){ const d = await res.json(); historyData.value = JSON.parse(d.files["data.json"].content); } } catch(e) {} };
+                
                 const latestKey = computed(() => Object.keys(historyData.value).filter(k=>historyData.value[k]?.hasData).sort().pop() || '07-01');
                 const latestDayInt = computed(() => parseInt(latestKey.value.substring(3)));
-                const latestDayBooking = computed(() => historyData.value[latestKey.value]?.b2026 ?? '-');
-                const latestDayCancel = computed(() => historyData.value[latestKey.value]?.c2026 ?? '-');
-                const latestLastYearDayBooking = computed(() => base2025Bookings[latestKey.value] || 0);
                 
-                const totalOnlineBooking = computed(() => { let t=0; for(let d=1; d<=latestDayInt.value; d++) t+=(historyData.value[`07-${d<10?'0'+d:d}`]?.b2026 || 0); return t; });
-                const totalCancelCount = computed(() => { let t=0; for(let d=1; d<=latestDayInt.value; d++) t+=(historyData.value[`07-${d<10?'0'+d:d}`]?.c2026 || 0); return t; });
-                const cumulativeLastYearBooking = computed(() => { let t=0; for(let d=1; d<=latestDayInt.value; d++) t+=(base2025Bookings[`07-${d<10?'0'+d:d}`] || 0); return t; });
-
-                const targetProgressThreshold = computed(() => latestDayInt.value <= 0 ? 0 : parseFloat(((latestDayInt.value/31)*100).toFixed(1)));
-                const yesterdayAchievementRate = computed(() => totalOnlineBooking.value ? ((totalOnlineBooking.value/1600)*100).toFixed(1) : '0.0');
-                const progressGapPercent = computed(() => parseFloat((parseFloat(yesterdayAchievementRate.value) - targetProgressThreshold.value).toFixed(2)));
-                const monthYoY = computed(() => cumulativeLastYearBooking.value ? (((totalOnlineBooking.value - cumulativeLastYearBooking.value)/cumulativeLastYearBooking.value)*100).toFixed(1) : '0.0');
-                const cancelRate = computed(() => totalOnlineBooking.value ? ((totalCancelCount.value/totalOnlineBooking.value)*100).toFixed(1) : '0.0');
-
                 const getCalendarDayData = (d, y) => y === '2026' ? (historyData.value[`07-${d<10?'0'+d:d}`]?.b2026 ?? '') : (base2025Bookings[`07-${d<10?'0'+d:d}`] || '');
-                const checkHasData = (d) => !!historyData.value[`07-${d<10?'0'+d:d}`]?.hasData;
-                const getCalWeatherSlots = (d, c, y) => []; // 簡化以節省空間
+                const transIcon = (w) => ({'晴天':'☀️','多雲':'☁️','陰天':'🌥️','陣雨':'🌧️','雷陣雨':'⛈️','大雨':'🌧️','暴雨':'⛈️'}[w] || '☁️');
+                
+                const getCalWeatherSlots = (d, c, y) => { 
+                    const k = `07-${d<10?'0'+d:d}`; 
+                    return y==='2026' ? (historyData.value[k]?.w2026?.[c] || ['','','','']).map(w=>transIcon(w)) : (weather2025All[k]?.[c] || ['','','','']).map(w=>transIcon(w)); 
+                };
 
-                let lineChart = null;
-                const updateChart = () => { if(!lineChart) return; let l=[], d26=[], d25=[]; for(let d=1; d<=31; d++){ let k=`07-${d<10?'0'+d:d}`; if(historyData.value[k]?.hasData){ l.push(d); d26.push(historyData.value[k].b2026); d25.push(base2025Bookings[k]||0); } } lineChart.data.labels=l; lineChart.data.datasets[0].data=d26; lineChart.data.datasets[1].data=d25; lineChart.update(); };
-                onMounted(() => {
-                    const ctx = document.getElementById('lineChart').getContext('2d');
-                    lineChart = new Chart(ctx, { type: 'line', data: { labels: [], datasets: [{ label: '今年', data: [], borderColor: '#ffcc00' }, { label: '去年', data: [], borderColor: '#111111' }] }, options: { responsive: true, maintainAspectRatio: false } });
-                    fetchCloudData();
-                });
+                onMounted(fetchCloudData);
 
-                return { cities, isLoading, isCalendarExpanded, latestDayBooking, latestDayCancel, latestLastYearDayBooking, totalCancelCount, formattedLatestDay: computed(()=>`7/${latestDayInt.value}`), totalOnlineBooking, cumulativeLastYearBooking, targetProgressThreshold, yesterdayAchievementRate, progressGapPercent, monthYoY, cancelRate, fetchCloudData, checkHasData, getCalendarDayData, getCalWeatherSlots };
+                return { 
+                    cities, isCalendarExpanded, latestDayBooking: computed(() => historyData.value[latestKey.value]?.b2026 ?? '-'), 
+                    latestDayCancel: computed(() => historyData.value[latestKey.value]?.c2026 ?? '-'), 
+                    latestLastYearDayBooking: computed(() => base2025Bookings[latestKey.value] || 0), 
+                    totalCancelCount: computed(() => { let t=0; for(let d=1; d<=latestDayInt.value; d++) t+=(historyData.value[`07-${d<10?'0'+d:d}`]?.c2026 || 0); return t; }), 
+                    formattedLatestDay: computed(() => `7/${latestDayInt.value}`),
+                    totalOnlineBooking: computed(() => { let t=0; for(let d=1; d<=latestDayInt.value; d++) t+=(historyData.value[`07-${d<10?'0'+d:d}`]?.b2026 || 0); return t; }),
+                    cumulativeLastYearBooking: computed(() => { let t=0; for(let d=1; d<=latestDayInt.value; d++) t+=(base2025Bookings[`07-${d<10?'0'+d:d}`] || 0); return t; }),
+                    targetProgressThreshold: computed(() => latestDayInt.value <= 0 ? 0 : parseFloat(((latestDayInt.value/31)*100).toFixed(1))),
+                    yesterdayAchievementRate: computed(() => (computed(() => { let t=0; for(let d=1; d<=latestDayInt.value; d++) t+=(historyData.value[`07-${d<10?'0'+d:d}`]?.b2026 || 0); return t; }).value / 1600 * 100).toFixed(1)),
+                    progressGapPercent: computed(() => parseFloat(((computed(() => { let t=0; for(let d=1; d<=latestDayInt.value; d++) t+=(historyData.value[`07-${d<10?'0'+d:d}`]?.b2026 || 0); return t; }).value / 1600 * 100) - (latestDayInt.value <= 0 ? 0 : parseFloat(((latestDayInt.value/31)*100).toFixed(1)))).toFixed(2))),
+                    monthYoY: computed(() => { 
+                        let t26=0, t25=0; for(let d=1; d<=latestDayInt.value; d++){ t26+=(historyData.value[`07-${d<10?'0'+d:d}`]?.b2026 || 0); t25+=(base2025Bookings[`07-${d<10?'0'+d:d}`] || 0); }
+                        return t25 ? (((t26-t25)/t25)*100).toFixed(1) : '0.0';
+                    }),
+                    cancelRate: computed(() => {
+                        let t26=0, tc=0; for(let d=1; d<=latestDayInt.value; d++){ t26+=(historyData.value[`07-${d<10?'0'+d:d}`]?.b2026 || 0); tc+=(historyData.value[`07-${d<10?'0'+d:d}`]?.c2026 || 0); }
+                        return t26 ? ((tc/t26)*100).toFixed(1) : '0.0';
+                    }),
+                    fetchCloudData, checkHasData: (d) => !!historyData.value[`07-${d<10?'0'+d:d}`]?.hasData, getCalendarDayData, getCalWeatherSlots
+                };
             }
         }).mount('#app');
     </script>

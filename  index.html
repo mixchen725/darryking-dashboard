@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大大力全台業績分析儀表板 v12 - 雲端唯讀大盤</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <style>
+        .dk-bg-yellow { background-color: #ffcc00; }
+        .dk-text-yellow { color: #ffcc00; }
+        .dk-border-yellow { border-color: #ffcc00; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #ffcc00; border-radius: 2px; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans p-4 text-gray-900 text-xs">
+
+    <div id="app" class="max-w-7xl mx-auto space-y-4">
+        <!-- 頂部 Header -->
+        <header class="flex flex-col md:flex-row md:items-center md:justify-between border-b-4 border-black pb-3 bg-white p-4 rounded-xl shadow-sm">
+            <div class="flex items-center space-x-4">
+                <div class="dk-bg-yellow text-black font-black px-3 py-2 text-center leading-tight tracking-wider rounded border border-black shadow-sm">
+                    大大力<br><span class="text-xxs font-normal border-t border-black block mt-0.5 pt-0.5">DARRYKING</span>
+                </div>
+                <div>
+                    <h1 class="text-sm font-black text-black flex items-center">📊 線上業績與天氣觀測大盤儀表板 (雲端唯讀版)</h1>
+                </div>
+            </div>
+            <div class="mt-2 md:mt-0 flex flex-wrap items-center gap-2">
+                <button @click="loadDataFromGoogleSheets" class="text-xs bg-black hover:bg-gray-800 text-white font-bold px-3 py-2 rounded-lg border dk-border-yellow shadow-sm flex items-center gap-1 cursor-pointer transition-all">
+                    🔄 點擊刷新雲端數據 {{ isLoading ? '...' : '' }}
+                </button>
+                <button @click="exportToExcel" class="text-xs bg-green-700 hover:bg-green-800 text-white font-bold px-3 py-2 rounded-lg border border-green-600 shadow-sm flex items-center gap-1 cursor-pointer transition-all">
+                    📥 一鍵匯出大盤 Excel
+                </button>
+                <div class="text-xs bg-black text-white font-bold px-4 py-2 rounded-lg border-2 dk-border-yellow w-fit shadow-sm">
+                    總預約目標：<span class="dk-text-yellow">1,600</span> 台
+                </div>
+            </div>
+        </header>
+
+        <!-- 主區塊：只保留主要大盤與月曆展示 -->
+        <div class="space-y-4">
+            
+            <!-- 數據卡片五聯盤 -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between">
+                    <div>
+                        <span class="text-xs text-gray-400 font-bold tracking-wider">今日最新預約 / 取消</span>
+                        <div class="text-sm font-black text-black mt-1">
+                            {{ todayBooking }} / <span class="text-red-600">{{ todayCancel }}</span> 台
+                        </div>
+                    </div>
+                    <div class="text-xs text-gray-500 border-t border-gray-100 pt-1 mt-1 font-semibold">去年同日: {{ autoLastYearDayBooking }} 台</div>
+                </div>
+
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between">
+                    <div>
+                        <span class="text-xs text-gray-400 font-bold tracking-wider">月累計 YoY (截至{{ formattedYesterday }})</span>
+                        <div class="text-sm font-black mt-1" :class="monthYoY >= 0 ? 'text-green-600' : 'text-red-600'">
+                            {{ monthYoY >= 0 ? '▲ +' : '▼ ' }}{{ monthYoY }}%
+                        </div>
+                    </div>
+                    <div class="text-xxs text-gray-400 border-t border-gray-100 pt-1 mt-1 truncate">今年:{{ yesterdayOnlineBooking }} / 去年:{{ yesterdayLastYearBooking }}</div>
+                </div>
+
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between">
+                    <div>
+                        <span class="text-xs text-gray-400 font-bold tracking-wider">大盤累計取消率</span>
+                        <div class="text-sm font-black mt-1" :class="cancelRate > 18 ? 'text-red-600' : 'text-green-600'">
+                            {{ cancelRate }}%
+                        </div>
+                    </div>
+                    <div class="text-xs text-gray-500 border-t border-gray-100 pt-1 mt-1 font-semibold">總取消: <span class="text-red-500">{{ totalCancelCount }}</span> 筆</div>
+                </div>
+
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between">
+                    <div>
+                        <span class="text-xs font-bold text-gray-400 tracking-wider">昨日總累計大盤進度</span>
+                        <div class="text-sm font-black mt-1" :class="yesterdayAchievementRate >= targetProgressThreshold ? 'text-green-600' : 'text-red-600'">
+                            {{ yesterdayAchievementRate }}%
+                        </div>
+                    </div>
+                    <div class="w-full bg-gray-100 rounded-full h-2 mt-1 overflow-hidden border border-gray-200">
+                        <div class="h-full rounded-full transition-all duration-500" 
+                             :class="yesterdayAchievementRate >= targetProgressThreshold ? 'dk-bg-yellow' : 'bg-red-500'" 
+                             :style="{ width: Math.min(yesterdayAchievementRate, 100) + '%' }"></div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between">
+                    <div>
+                        <span class="text-xs font-bold text-gray-400 tracking-wider">進度落差值</span>
+                        <div class="text-sm font-black mt-1" :class="progressGapPercent >= 0 ? 'text-green-600' : 'text-red-600'">
+                            {{ progressGapPercent >= 0 ? '▲ +' : '▼ ' }}{{ progressGapPercent }}%
+                        </div>
+                    </div>
+                    <div class="text-xs text-gray-400 border-t border-gray-100 pt-1 mt-1 truncate">日目標基準: {{ targetProgressThreshold }}%</div>
+                </div>
+            </div>
+
+            <!-- 走勢圖 -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                <div class="border-l-4 dk-border-yellow pl-2 mb-3">
+                    <h3 class="text-xs font-black text-black">📈 7月份 全台每日預約台數動態走勢圖 (雙線交叉分析)</h3>
+                </div>
+                <div class="h-52 w-full">
+                    <canvas id="lineChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 業績天氣月曆 -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b border-gray-200 pb-2 mb-3 gap-2 text-xs">
+                    <div class="border-l-4 dk-border-yellow pl-2">
+                        <h3 class="text-xs font-black text-black">📅 2026 年 7 月 業績與天氣狀況月曆 (自動串聯 Google Sheet)</h3>
+                    </div>
+                    <div class="flex gap-3 text-xs font-bold">
+                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 dk-bg-yellow border border-black rounded"></span>今年預約</span>
+                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-gray-800 border border-black rounded"></span>去年預約</span>
+                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-gray-200 border border-gray-300 rounded opacity-40"></span>無數據天</span>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-7 gap-1 bg-gray-900 p-1.5 rounded-xl text-xs shadow-inner">
+                    <div v-for="w in 7" :key="w" class="text-center font-black py-1 dk-text-yellow text-xs tracking-wider">
+                        {{ ['日','一','二','三','四','五','六'][w-1] }}
+                    </div>
+                    
+                    <div class="bg-gray-800 opacity-20 rounded-lg p-1 min-h-[135px]"></div>
+                    <div class="bg-gray-800 opacity-20 rounded-lg p-1 min-h-[135px]"></div>
+                    
+                    <div v-for="day in 31" :key="day" 
+                         class="rounded-lg p-1.5 min-h-[140px] border transition-all flex flex-col justify-between text-xs"
+                         :class="checkHasData(day) ? 'bg-white border-gray-300 shadow-sm' : 'bg-gray-800 border-gray-700 opacity-30'"
+                    >
+                        <div class="flex items-center justify-between border-b border-gray-100 pb-1 text-xs">
+                            <span class="font-black text-gray-900 text-xs">7/{{ day }}</span>
+                            <div class="flex gap-1 text-xs">
+                                <span class="px-1.5 py-0.2 rounded font-black border-2 border-black dk-bg-yellow text-black text-xs shadow-xxs">
+                                    {{ getCalendarDayData(day, '2026') }}
+                                </span>
+                                <span class="px-1.5 py-0.2 rounded font-bold border border-gray-400 bg-black text-white text-xs">
+                                    {{ getCalendarDayData(day, '2025') }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-1 mt-1 overflow-y-auto max-h-[95px] pr-0.5 text-xs custom-scrollbar">
+                            <div v-for="city in cities" :key="city" class="border-b border-gray-100 pb-1 text-xs">
+                                <div class="flex justify-between font-bold text-gray-600 mb-0.5 bg-gray-100 px-1 rounded text-xxs scale-95 origin-left">
+                                    <span>{{ city }}</span>
+                                </div>
+                                <div class="flex flex-col gap-0.5 pl-0.5 text-xxs scale-95 origin-left">
+                                    <div class="flex justify-between items-center text-blue-600 font-bold">
+                                        <span>2026:</span>
+                                        <div class="flex gap-0.5">
+                                            <span v-for="(icon, i) in getCalWeatherSlots(day, city, '2026')" :key="i">{{ icon }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-center text-gray-400">
+                                        <span>2025:</span>
+                                        <div class="flex gap-0.5">
+                                            <span v-for="(icon, i) in getCalWeatherSlots(day, city, '2025')" :key="i">{{ icon }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer class="text-center py-4 text-gray-400 font-semibold border-t border-gray-200 text-xxs">
+            大大力實業股份有限公司 DARRYKING 內部高階營運戰略分析大盤 | Data Stack 2025-2026
+        </footer>
+    </div>
+
+    <script>
+        // ⚠️ 這裡請換成你在 階段一 複製出來的 Google Sheet 發布 CSV 網址 ⚠️
+        const BOOKINGS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSg-97bAgQ9k_dnShahCuK5UsGHFuWdAdc8s-eyoFlzFVJtahGM-89Sw9-hrgpiC3XuyvnzbN0ETBWT/pub?gid=0&single=true&output=csv";
+        const WEATHER_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSg-97bAgQ9k_dnShahCuK5UsGHFuWdAdc8s-eyoFlzFVJtahGM-89Sw9-hrgpiC3XuyvnzbN0ETBWT/pub?gid=2144836725&single=true&output=csv";
+
+        const { createApp, ref, computed, watch, onMounted } = Vue;
+        Chart.register(ChartDataLabels);
+
+        createApp({
+            setup() {
+                const globalTarget = 1600;
+                const cities = ['台北', '新北', '桃園', '台中', '台南', '高雄'];
+                const isLoading = ref(false);
+
+                const base2025Bookings = {
+                    '07-01': 52, '07-02': 50, '07-03': 63, '07-04': 56, '07-05': 65, '07-06': 53, '07-07': 58,
+                    '07-08': 61, '07-09': 58, '07-10': 51, '07-11': 47, '07-12': 41, '07-13': 47, '07-14': 79,
+                    '07-15': 59, '07-16': 67, '07-17': 60, '07-18': 59, '07-19': 47, '07-20': 52, '07-21': 72,
+                    '07-22': 67, '07-23': 55, '07-24': 46, '07-25': 37, '07-26': 55, '07-27': 54, '07-28': 62,
+                    '07-29': 66, '07-30': 69, '07-31': 58
+                };
+
+                const weather2025All = {
+                    "07-01": {"台北": ["多雲", "多雲", "雷陣雨", "多雲"], "新北": ["多雲", "多雲", "雷陣雨", "多雲"], "桃園": ["多雲", "多雲", "雷陣雨", "多雲"], "台中": ["多雲", "陰天", "雷陣雨", "多雲"], "台南": ["多雲", "陰天", "雷陣雨", "多雲"], "高雄": ["多雲", "陰天", "雷陣雨", "多雲"]},
+                    "07-02": {"台北": ["晴天", "多雲", "雷陣雨", "陰天"], "新北": ["晴天", "多雲", "雷陣雨", "陰天"], "桃園": ["晴天", "多雲", "雷陣雨", "陰天"], "台中": ["陣雨", "多雲", "雷陣雨", "陣雨"], "台南": ["陣雨", "多雲", "雷陣雨", "陣雨"], "高雄": ["陣雨", "多雲", "雷陣雨", "陣雨"]},
+                    "07-03": {"台北": ["多雲", "多雲", "雷陣雨", "多雲"], "新北": ["多雲", "多雲", "雷陣雨", "多雲"], "桃園": ["多雲", "多雲", "雷陣雨", "多雲"], "台中": ["多雲", "陰天", "雷陣雨", "多雲"], "台南": ["多雲", "陰天", "雷陣雨", "多雲"], "高雄": ["多雲", "陰天", "雷陣雨", "多雲"]},
+                    "07-04": {"台北": ["晴天", "多雲", "雷陣雨", "陰天"], "新北": ["晴天", "多雲", "雷陣雨", "陰天"], "桃園": ["晴天", "多雲", "雷陣雨", "陰天"], "台中": ["陣雨", "多雲", "雷陣雨", "陣雨"], "台南": ["陣雨", "多雲", "雷陣雨", "陣雨"], "高雄": ["陣雨", "多雲", "雷陣雨", "陣雨"]}
+                };
+
+                const historyData = ref({});
+
+                // 核心：利用 Fetch 即時解析 Google Sheets CSV 資料
+                const loadDataFromGoogleSheets = async () => {
+                    isLoading.value = true;
+                    try {
+                        // 1. 抓取預約與取消數
+                        const bRes = await fetch(BOOKINGS_CSV_URL + '&t=' + new Date().getTime());
+                        const bText = await bRes.text();
+                        const bLines = bText.split('\n').map(line => line.split(','));
+                        
+                        let tempMap = {};
+                        // 從第二行開始讀取資料 (跳過表頭)
+                        for(let i=1; i<bLines.length; i++) {
+                            if(!bLines[i][0]) continue;
+                            const dateKey = bLines[i][0].trim(); // 格式：07-01
+                            const bookingVal = parseInt(bLines[i][1]) || 0;
+                            const cancelVal = parseInt(bLines[i][2]) || 0;
+                            
+                            tempMap[dateKey] = {
+                                hasData: true,
+                                b2026: bookingVal,
+                                c2026: cancelVal,
+                                w2026: { '台北':['','','',''], '新北':['','','',''], '桃園':['','','',''], '台中':['','','',''], '台南':['','','',''], '高雄':['','','',''] }
+                            };
+                        }
+
+                        // 2. 抓取天氣觀測
+                        const wRes = await fetch(WEATHER_CSV_URL + '&t=' + new Date().getTime());
+                        const wText = await wRes.text();
+                        const wLines = wText.split('\n').map(line => line.split(','));
+                        
+                        for(let i=1; i<wLines.length; i++) {
+                            if(!wLines[i][0]) continue;
+                            const dateKey = wLines[i][0].trim();
+                            if(!tempMap[dateKey]) {
+                                tempMap[dateKey] = { hasData: true, b2026: 0, c2026: 0, w2026: {} };
+                            }
+                            cities.forEach((city, cIdx) => {
+                                const weatherStr = wLines[i][cIdx+1] ? wLines[i][cIdx+1].replace(/"/g, '').trim() : '';
+                                // 將試算表內以逗號或斜線分隔的四個時段拆開
+                                let slots = weatherStr.includes(';') ? weatherStr.split(';') : weatherStr.split('/');
+                                if(slots.length < 4) slots = weatherStr.split(',');
+                                while(slots.length < 4) slots.push('');
+                                tempMap[dateKey].w2026[city] = slots;
+                            });
+                        }
+
+                        historyData.value = tempMap;
+                    } catch (err) {
+                        console.error("讀取 Google Sheet 失敗，請確認發布設定！", err);
+                    } finally {
+                        isLoading.value = false;
+                        updateChart();
+                    }
+                };
+
+                // 自動計算今天最新狀態（抓 historyData 的最後一筆有效資料）
+                const activeKeys = computed(() => Object.keys(historyData.value).filter(k => historyData.value[k].hasData).sort());
+                const latestKey = computed(() => activeKeys.value.length > 0 ? activeKeys.value[activeKeys.value.length - 1] : '07-01');
+                
+                const todayBooking = computed(() => historyData.value[latestKey.value]?.b2026 ?? '-');
+                const todayCancel = computed(() => historyData.value[latestKey.value]?.c2026 ?? '-');
+                const autoLastYearDayBooking = computed(() => base2025Bookings[latestKey.value] || 0);
+
+                const totalOnlineBooking = computed(() => Object.values(historyData.value).reduce((sum, d) => sum + (d.b2026 || 0), 0));
+                const totalCancelCount = computed(() => Object.values(historyData.value).reduce((sum, d) => sum + (d.c2026 || 0), 0));
+
+                const formattedYesterday = computed(() => {
+                    const dayInt = parseInt(latestKey.value.substring(3));
+                    return `7/${dayInt - 1 <= 0 ? 1 : dayInt - 1}`;
+                });
+
+                const yesterdayOnlineBooking = computed(() => {
+                    const limitDay = parseInt(latestKey.value.substring(3)) - 1;
+                    let total = 0;
+                    for (let d = 1; d <= limitDay; d++) {
+                        total += (historyData.value[`07-${d < 10 ? '0' + d : d}`]?.b2026 || 0);
+                    }
+                    return total;
+                });
+
+                const yesterdayLastYearBooking = computed(() => {
+                    const limitDay = parseInt(latestKey.value.substring(3)) - 1;
+                    let total = 0;
+                    for (let d = 1; d <= limitDay; d++) {
+                        total += (base2025Bookings[`07-${d < 10 ? '0' + d : d}`] || 0);
+                    }
+                    return total;
+                });
+
+                const targetProgressThreshold = computed(() => {
+                    const limitDay = parseInt(latestKey.value.substring(3)) - 1;
+                    return limitDay <= 0 ? 0 : parseFloat(((limitDay / 31) * 100).toFixed(1));
+                });
+
+                const yesterdayAchievementRate = computed(() => globalTarget ? ((yesterdayOnlineBooking.value / globalTarget) * 100).toFixed(1) : 0);
+                const progressGapPercent = computed(() => parseFloat((yesterdayAchievementRate.value - targetProgressThreshold.value).toFixed(2)));
+                const monthYoY = computed(() => yesterdayLastYearBooking.value ? (((yesterdayOnlineBooking.value - yesterdayLastYearBooking.value) / yesterdayLastYearBooking.value) * 100).toFixed(1) : 0);
+                const cancelRate = computed(() => totalOnlineBooking.value ? ((totalCancelCount.value / totalOnlineBooking.value) * 100).toFixed(1) : 0);
+
+                const transIcon = (w) => {
+                    const map = { '晴天':'☀️', '多雲':'☁️', '陰天':'🌥️', '陣雨':'🌧️', '雷陣雨':'⛈️', '大雨':'🌧️', '暴雨':'⛈️' };
+                    return map[w] || '';
+                };
+
+                const checkHasData = (day) => {
+                    const key = `07-${day < 10 ? '0' + day : day}`;
+                    return !!historyData.value[key]?.hasData;
+                };
+
+                const getCalWeatherSlots = (day, city, year) => {
+                    const key = `07-${day < 10 ? '0' + day : day}`;
+                    if (year === '2026') {
+                        return (historyData.value[key]?.w2026?.[city] || ['','','','']).map(w => transIcon(w));
+                    } else {
+                        return (weather2025All[key]?.[city] || ['☁️','☁️','☁️','☁️']).map(w => transIcon(w));
+                    }
+                };
+
+                const getCalendarDayData = (day, year) => {
+                    const key = `07-${day < 10 ? '0' + day : day}`;
+                    return year === '2026' ? (historyData.value[key]?.b2026 ?? '') : (base2025Bookings[key] || '');
+                };
+
+                const exportToExcel = () => {
+                    let csvContent = "\uFEFF日期,2026今年預約(台),2026今年取消(筆),2025去年預約(台)\n";
+                    for (let d = 1; d <= 31; d++) {
+                        const key = `07-${d < 10 ? '0' + d : d}`;
+                        csvContent += `7/${d},${historyData.value[key]?.b2026 ?? ""},${historyData.value[key]?.c2026 ?? ""},${base2025Bookings[key] || ""}\n`;
+                    }
+                    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(blob);
+                    link.setAttribute("download", `大大力大盤雲端匯出.csv`);
+                    link.click();
+                };
+
+                let lineChart = null;
+                const updateChart = () => {
+                    if (!lineChart) return;
+                    const labels = []; const data2026 = []; const data2025 = [];
+                    for (let d = 1; d <= 31; d++) {
+                        const key = `07-${d < 10 ? '0' + d : d}`;
+                        if (historyData.value[key]?.hasData) {
+                            labels.push(`7/${d}`);
+                            data2026.push(historyData.value[key].b2026);
+                            data2025.push(base2025Bookings[key] || 0);
+                        }
+                    }
+                    lineChart.data.labels = labels;
+                    lineChart.data.datasets[0].data = data2026;
+                    lineChart.data.datasets[1].data = data2025;
+                    lineChart.update();
+                };
+
+                onMounted(() => {
+                    const ctxL = document.getElementById('lineChart').getContext('2d');
+                    lineChart = new Chart(ctxL, {
+                        type: 'line',
+                        data: { labels: [], datasets: [
+                            { label: '2026 今年預約', data: [], borderColor: '#ffcc00', backgroundColor: '#ffcc00', tension: 0.1, borderWidth: 3 },
+                            { label: '2025 去年預約', data: [], borderColor: '#111111', backgroundColor: '#666666', tension: 0.1, borderWidth: 2 }
+                        ]},
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: true, align: 'top', font: { size: 10, weight: 'bold' } } } }
+                    });
+                    loadDataFromGoogleSheets();
+                });
+
+                return {
+                    cities, isLoading, todayBooking, todayCancel, autoLastYearDayBooking, totalCancelCount,
+                    formattedYesterday, yesterdayOnlineBooking, yesterdayLastYearBooking, targetProgressThreshold,
+                    yesterdayAchievementRate, progressGapPercent, monthYoY, cancelRate,
+                    loadDataFromGoogleSheets, checkHasData, getCalWeatherSlots, getCalendarDayData, exportToExcel
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

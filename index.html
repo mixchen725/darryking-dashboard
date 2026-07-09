@@ -7,72 +7,41 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-gray-50 p-4 text-xs">
+<body class="bg-gray-50 p-4">
     <div id="app" class="max-w-7xl mx-auto space-y-4">
-        <header class="bg-white p-4 rounded-xl shadow-sm border-b-4 border-black flex justify-between items-center">
-            <h1 class="font-black text-sm">📊 大大力業績分析</h1>
-            <button @click="fetchCloudData" class="bg-black text-white px-3 py-1 rounded">🔄 同步</button>
-        </header>
+        <button @click="isExpanded = !isExpanded" class="bg-black text-white px-4 py-2 rounded font-black">
+            {{ isExpanded ? '收合月曆' : '展開月曆' }}
+        </button>
 
-        <div class="bg-white p-4 rounded-xl shadow-sm h-64 border">
-            <canvas id="lineChart"></canvas>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
-            <div @click="isExpanded = !isExpanded" class="bg-black p-3 text-white font-black cursor-pointer flex justify-between">
-                <span>📅 7月份 每日台數觀測大盤</span>
-                <span>{{ isExpanded ? '[-]' : '[+]' }}</span>
-            </div>
-            
-            <div v-show="isExpanded" class="p-2 grid grid-cols-7 gap-1 bg-gray-100">
-                <div v-for="w in ['日','一','二','三','四','五','六']" class="text-center font-bold py-1">{{ w }}</div>
-                <div class="bg-white rounded border"></div><div class="bg-white rounded border"></div>
-                <div v-for="d in 31" class="bg-white p-1 rounded border min-h-[80px]">
-                    <div class="font-bold border-b mb-1">7/{{ d }}</div>
-                    <div class="font-black">{{ getBooking(d) }}</div>
-                </div>
+        <div v-show="isExpanded" class="grid grid-cols-7 gap-1 bg-gray-200 p-2 rounded-lg border">
+            <div v-for="w in ['日','一','二','三','四','五','六']" class="text-center font-bold">{{ w }}</div>
+            <div v-for="d in 31" class="bg-white p-2 h-24 border rounded shadow-sm">
+                <div class="font-bold border-b mb-1">7/{{ d }}</div>
+                <div class="text-lg font-black">{{ getBooking(d) }}</div>
             </div>
         </div>
     </div>
 
     <script>
         const GIST_ID = "3cd74e6ce0f0041ea785c24fb7d210c9";
-        const { createApp, ref, computed, onMounted } = Vue;
+        const { createApp, ref, onMounted } = Vue;
 
         createApp({
             setup() {
                 const history = ref({});
-                const isExpanded = ref(true); // 預設展開，點擊標題即可閉合
+                const isExpanded = ref(true);
                 
                 const fetchCloudData = async () => {
                     const res = await fetch(`https://api.github.com/gists/${GIST_ID}`);
                     const d = await res.json();
                     const fileName = Object.keys(d.files)[0];
                     history.value = JSON.parse(d.files[fileName].content);
-                    updateChart();
                 };
 
-                let chart = null;
-                const updateChart = () => {
-                    if(!chart) return;
-                    const days = Object.keys(history.value).sort();
-                    chart.data.labels = days.map(d => d.split('-')[1]);
-                    chart.data.datasets[0].data = days.map(d => history.value[d].b2026);
-                    chart.update();
-                };
-
-                onMounted(() => {
-                    const ctx = document.getElementById('lineChart').getContext('2d');
-                    chart = new Chart(ctx, { 
-                        type: 'line', 
-                        data: { labels: [], datasets: [{ label: '今年', data: [], borderColor: '#ffcc00' }] },
-                        options: { responsive: true, maintainAspectRatio: false }
-                    });
-                    fetchCloudData();
-                });
+                onMounted(fetchCloudData);
 
                 return { 
-                    isExpanded, fetchCloudData,
+                    isExpanded,
                     getBooking: (d) => history.value[`07-${d<10?'0'+d:d}`]?.b2026 || '' 
                 };
             }

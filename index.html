@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>大大力全台業績分析儀表板 v13 - 官方形象唯讀看板</title>
+    <title>大大力全台業績分析儀表板 v14 - 官方形象唯讀看板</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -30,7 +30,7 @@
                 </div>
             </div>
             <div class="mt-2 md:mt-0 flex flex-wrap items-center gap-2">
-                <button @click="fetchCloudData" class="text-xs bg-black text-white font-bold px-3 py-2 rounded-lg border dk-border-yellow shadow-sm transition-all">
+                <button @click="fetchCloudData" class="text-xs bg-black hover:bg-gray-800 text-white font-bold px-3 py-2 rounded-lg border dk-border-yellow shadow-sm transition-all">
                     🔄 {{ isLoading ? '數據加載中...' : '同步最新雲端業績' }}
                 </button>
                 <div class="text-xs bg-black text-white font-bold px-4 py-2 rounded-lg border-2 dk-border-yellow w-fit shadow-sm">
@@ -105,6 +105,11 @@
         </div>
 
         <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b border-gray-200 pb-2 mb-3 gap-2 text-xs">
+                <div class="border-l-4 dk-border-yellow pl-2">
+                    <h3 class="text-xs font-black text-black">📅 2026 年 7 月 業績與天氣狀況月曆 (GitHub 雲端連線版)</h3>
+                </div>
+            </div>
             <div class="grid grid-cols-7 gap-1 bg-gray-900 p-1.5 rounded-xl text-xs">
                 <div v-for="w in 7" :key="w" class="text-center font-black py-1 dk-text-yellow text-xs">
                     {{ ['日','一','二','三','四','五','六'][w-1] }}
@@ -136,18 +141,17 @@
     </div>
 
     <script>
-        // ⚠️ 這裡的網址必須和後台輸入網頁的網址完全相同 ⚠️
-        const MY_CLOUD_URL = "https://api.restful-api.dev/objects/ff80818190774226_darryking_v13";
+        // 已自動為您換成專屬的 Gist ID 數據通道
+        const GIST_ID = "3cd74e6ce0f0041ea785c24fb7d210c9";
+
         const { createApp, ref, computed, onMounted } = Vue;
         Chart.register(ChartDataLabels);
 
         createApp({
             setup() {
                 const cities = ['台北', '新北', '桃園', '台中', '台南', '高雄'];
-                const globalTarget = 1600;
-                const isLoading = ref(false);
-                const historyData = ref({});
-
+                const globalTarget = 1600; const isLoading = ref(false); const historyData = ref({});
+                
                 const base2025Bookings = {
                     '07-01': 52, '07-02': 50, '07-03': 63, '07-04': 56, '07-05': 65, '07-06': 53, '07-07': 58,
                     '07-08': 61, '07-09': 58, '07-10': 51, '07-11': 47, '07-12': 41, '07-13': 47, '07-14': 79,
@@ -157,21 +161,55 @@
                 };
 
                 const weather2025All = {
-                    "07-01": {"台北": ["多雲", "多雲", "雷陣雨", "多雲"], "新北": ["多雲", "多雲", "雷陣雨", "多雲"]}
+                    "07-01": {"台北": ["多雲", "多雲", "雷陣雨", "多雲"], "新北": ["多雲", "多雲", "雷陣雨", "多雲"], "桃園": ["多雲", "多雲", "雷陣雨", "多雲"], "台中": ["多雲", "陰天", "雷陣雨", "多雲"], "台南": ["多雲", "陰天", "雷陣雨", "多雲"], "高雄": ["多雲", "陰天", "雷陣雨", "多雲"]},
+                    "07-02": {"台北": ["晴天", "多雲", "雷陣雨", "陰天"], "新北": ["晴天", "多雲", "雷陣雨", "陰天"], "桃園": ["晴天", "多雲", "雷陣雨", "陰天"], "台中": ["陣雨", "多雲", "雷陣雨", "陣雨"], "台南": ["陣雨", "多雲", "雷陣雨", "陣雨"], "高雄": ["陣雨", "多雲", "雷陣雨", "陣雨"]},
+                    "07-03": {"台北": ["多雲", "多雲", "雷陣雨", "多雲"], "新北": ["多雲", "多雲", "雷陣雨", "多雲"], "桃園": ["多雲", "多雲", "雷陣雨", "多雲"], "台中": ["多雲", "陰天", "雷陣雨", "多雲"], "台南": ["多雲", "陰天", "雷陣雨", "多雲"], "高雄": ["多雲", "陰天", "雷陣雨", "多雲"]},
+                    "07-04": {"台北": ["晴天", "多雲", "雷陣雨", "陰天"], "新北": ["晴天", "多雲", "雷陣雨", "陰天"], "桃園": ["晴天", "多雲", "雷陣雨", "陰天"], "台中": ["陣雨", "多雲", "雷陣雨", "陣雨"], "台南": ["陣雨", "多雲", "雷陣雨", "陣雨"], "高雄": ["陣雨", "多雲", "雷陣雨", "陣雨"]},
+                    "07-05": {"台北": ["多雲", "陰天", "陣雨", "陣雨"], "新北": ["多雲", "陰天", "陣雨", "陣雨"], "桃園": ["多雲", "陰天", "陣雨", "陣雨"], "台中": ["陰天", "大雨", "暴雨", "大雨"], "台南": ["陰天", "大雨", "暴雨", "大雨"], "高雄": ["陰天", "大雨", "暴雨", "大雨"]},
+                    "07-06": {"台北": ["多雲", "陰天", "陣雨", "陣雨"], "新北": ["多雲", "陰天", "陣雨", "陣雨"], "桃園": ["多雲", "陰天", "陣雨", "陣雨"], "台中": ["陰天", "大雨", "暴雨", "大雨"], "台南": ["陰天", "大雨", "暴雨", "大雨"], "高雄": ["陰天", "大雨", "暴雨", "大雨"]},
+                    "07-07": {"台北": ["多雲", "陰天", "陣雨", "陣雨"], "新北": ["多雲", "陰天", "陣雨", "陣雨"], "桃園": ["多雲", "陰天", "陣雨", "陣雨"], "台中": ["陰天", "大雨", "暴雨", "大雨"], "台南": ["陰天", "大雨", "暴雨", "大雨"], "高雄": ["陰天", "大雨", "暴雨", "大雨"]},
+                    "07-08": {"台北": ["陰天", "陣雨", "陣雨", "陰天"], "新北": ["陰天", "陣雨", "陣雨", "陰天"], "桃園": ["陰天", "陣雨", "陣雨", "陰天"], "台中": ["大雨", "暴雨", "暴雨", "大雨"], "台南": ["大雨", "暴雨", "暴雨", "大雨"], "高雄": ["大雨", "暴雨", "暴雨", "大雨"]},
+                    "07-09": {"台北": ["陰天", "陣雨", "陣雨", "陰天"], "新北": ["陰天", "陣雨", "陣雨", "陰天"], "桃園": ["陰天", "陣雨", "陣雨", "陰天"], "台中": ["大雨", "暴雨", "暴雨", "大雨"], "台南": ["大雨", "暴雨", "暴雨", "大雨"], "高雄": ["大雨", "暴雨", "暴雨", "大雨"]},
+                    "07-10": {"台北": ["陰天", "陣雨", "陣雨", "陰天"], "text-blue-600": ["陰天", "陣雨", "陣雨", "陰天"], "桃園": ["陰天", "陣雨", "陣雨", "陰天"], "台中": ["大雨", "暴雨", "暴雨", "大雨"], "台南": ["大雨", "暴雨", "暴雨", "大雨"], "高雄": ["大雨", "暴雨", "暴雨", "大雨"]},
+                    "07-11": {"台北": ["多雲", "多雲", "雷陣雨", "多雲"], "新北": ["多雲", "多雲", "雷陣雨", "多雲"], "桃園": ["多雲", "多雲", "雷陣雨", "多雲"], "台中": ["多雲", "陰天", "雷陣雨", "多雲"], "台南": ["多雲", "陰天", "雷陣雨", "多雲"], "高雄": ["多雲", "陰天", "雷陣雨", " Quakers "]},
+                    "07-12": {"台北": ["晴天", "多雲", "雷陣雨", "陰天"], "新北": ["晴天", "多雲", "雷陣雨", "陰天"], "桃園": ["晴天", "多雲", "雷陣雨", "陰天"], "台中": ["陣雨", "多雲", "雷陣雨", "陣雨"], "台南": ["陣雨", "多雲", "雷陣雨", "陣雨"], "高雄": ["陣雨", "多雲", "雷陣雨", "陣雨"]},
+                    "07-13": {"台北": ["多雲", "多雲", "雷陣雨", "多雲"], "新北": ["多雲", "多雲", "雷陣雨", "多雲"], "桃園": ["多雲", "多雲", "雷陣雨", "多雲"], "台中": ["多雲", "陰天", "雷陣雨", "多雲"], "台南": ["多雲", "陰天", "雷陣雨", "多雲"], "高雄": ["多雲", "陰天", "雷陣雨", "多雲"]},
+                    "07-14": {"台北": ["晴天", "多雲", "雷陣雨", "陰天"], "新北": ["晴天", "多雲", "雷陣雨", "陰天"], "桃園": ["晴天", "多雲", "雷陣雨", "陰天"], "台中": ["陣雨", "多雲", "雷陣雨", "陣雨"], "台南": ["陣雨", "多雲", "雷陣雨", "陣雨"], "高雄": ["陣雨", "多雲", "雷陣雨", "陣雨"]},
+                    "07-15": {"台北": ["多雲", "多雲", "雷陣雨", "多雲"], "新北": ["多雲", "多雲", "雷陣雨", "多雲"], "桃園": ["多雲", "多雲", "雷陣雨", "多雲"], "台中": ["多雲", "陰天", "雷陣雨", "多雲"], "台南": ["多雲", "陰天", "雷陣雨", "多雲"], "高雄": ["多雲", "陰天", "雷陣雨", "多雲"]},
+                    "07-16": {"台北": ["晴天", "多雲", "雷陣雨", "陰天"], "新北": ["晴天", "多雲", "雷陣雨", "陰天"], "桃園": ["晴天", "多雲", "雷陣雨", "陰天"], "台中": ["陣雨", "多雲", "雷陣雨", "陣雨"], "台南": ["陣雨", "多雲", "雷陣雨", "陣雨"], "高雄": ["陣雨", "多雲", "雷陣雨", "陣雨"]},
+                    "07-17": {"台北": ["多雲", "多雲", "雷陣雨", "多雲"], "新北": ["多雲", "多雲", "雷陣雨", "多雲"], "桃園": ["多雲", "開朗", "雷陣雨", "多雲"], "台中": ["多雲", "陰天", "雷陣雨", "多雲"], "台南": ["多雲", "陰天", "雷陣雨", "多雲"], "高雄": ["多雲", "陰天", "雷陣雨", "多雲"]},
+                    "07-18": {"台北": ["晴天", "多雲", "雷陣雨", "陰天"], "新北": ["晴天", "多雲", "雷陣雨", "陰天"], "桃園": ["晴天", "多雲", "雷陣雨", "陰天"], "台中": ["陣雨", "多雲", "雷陣雨", "陣雨"], "台南": ["陣雨", "多雲", "雷陣雨", "陣雨"], "高雄": ["陣雨", "多雲", "雷陣雨", "陣雨"]},
+                    "07-19": {"台北": ["多雲", "多雲", "雷陣雨", "多雲"], "新北": ["多雲", "多雲", "雷陣雨", "多雲"], "桃園": ["多雲", "多雲", "雷陣雨", "多雲"], "台中": ["多雲", "陰天", "雷陣雨", "多雲"], "台南": ["多雲", "陰天", "雷陣雨", "多雲"], "高雄": ["多雲", "陰天", "雷陣雨", "多雲"]},
+                    "07-20": {"台北": ["晴天", "多雲", "雷陣雨", "陰天"], "新北": ["晴天", "多雲", "雷陣雨", "陰天"], "桃園": ["晴天", "多雲", "雷陣雨", "陰天"], "台中": ["陣雨", "多雲", "雷陣雨", "陣雨"], "台南": ["陣雨", "多雲", "雷陣雨", "陣雨"], "高雄": ["陣雨", "多雲", "雷陣雨", "陣雨"]},
+                    "07-21": {"台北": ["多雲", "多雲", "雷陣雨", "多雲"], "新北": ["多雲", "多雲", "雷陣雨", "多雲"], "桃園": ["多雲", "多雲", "雷陣雨", "多雲"], "台中": ["多雲", "陰天", "雷陣雨", "多雲"], "台南": ["多雲", "陰天", "雷陣雨", "多雲"], "高雄": ["多雲", "陰天", "雷陣雨", "多雲"]},
+                    "07-22": {"台北": ["晴天", "多雲", "雷陣雨", "陰天"], "新北": ["晴天", "多雲", "雷陣雨", "陰天"], "桃園": ["晴天", "多雲", "雷陣雨", "陰天"], "台中": ["陣雨", "多雲", "雷陣雨", "陣雨"], "台南": ["陣雨", "多雲", "雷陣雨", "陣雨"], "高雄": ["陣雨", "多雲", "雷陣雨", "陣雨"]},
+                    "07-23": {"台北": ["多雲", "多雲", "雷陣雨", "多雲"], "新北": ["多雲", "多雲", "雷陣雨", "多雲"], "桃園": ["多雲", "多雲", "雷陣雨", "多雲"], "台中": ["多雲", "陰天", "雷陣雨", "多雲"], "台南": ["多雲", "陰天", "雷陣雨", "多雲"], "高雄": ["多雲", "陰天", "雷陣雨", "多雲"]},
+                    "07-24": {"台北": ["晴天", "多雲", "雷陣雨", "陰天"], "新北": ["晴天", "多雲", "雷陣雨", "陰天"], "桃園": ["晴天", "多雲", "雷陣雨", "陰天"], "台中": ["陣雨", "多雲", "雷陣雨", "陣雨"], "台南": ["陣雨", "多雲", "雷陣雨", "陣雨"], "高雄": ["陣雨", "多雲", "雷陣雨", "陣雨"]},
+                    "07-25": {"台北": ["多雲", "多雲", "雷陣雨", "多雲"], "新北": ["多雲", "多雲", "雷陣雨", "多雲"], "桃園": ["多雲", "多雲", "雷陣雨", "多雲"], "台中": ["多雲", "陰天", "雷陣雨", "多雲"], "台南": ["多雲", "陰天", "雷陣雨", "多雲"], "高雄": ["多雲", "陰天", "雷陣雨", "多雲"]},
+                    "07-26": {"台北": ["晴天", "多雲", "雷陣雨", "陰天"], "新北": ["晴天", "多雲", "雷陣雨", "陰天"], "桃園": ["晴天", "多雲", "雷陣雨", "陰天"], "台中": ["陣雨", "多雲", "雷陣雨", "陣雨"], "台南": ["陣雨", "多雲", "雷陣雨", "陣雨"], "高雄": ["陣雨", "多雲", "雷陣雨", "陣雨"]},
+                    "07-27": {"台北": ["多雲", "多雲", "雷陣雨", "多雲"], "新北": ["多雲", "多雲", "雷陣雨", "多雲"], "桃園": ["多雲", "多雲", "雷陣雨", "多雲"], "台中": ["多雲", "陰天", "雷陣雨", "多雲"], "台南": ["多雲", "陰天", "雷陣雨", "多雲"], "高雄": ["多雲", "陰天", "雷陣雨", "多雲"]},
+                    "07-28": {"台北": ["多雲", "陰天", "陣雨", "多雲"], "新北": ["多雲", "陰天", "陣雨", "多雲"], "桃園": ["多雲", "陰天", "陣雨", "多雲"], "台中": ["大雨", "暴雨", "暴雨", "大雨"], "台南": ["大雨", "暴雨", "暴雨", "大雨"], "高雄": ["大雨", "暴雨", "暴雨", "大雨"]},
+                    "07-29": {"台北": ["多雲", "陰天", "陣雨", "多雲"], "新北": ["多雲", "陰天", "陣雨", "多雲"], "桃園": ["多雲", "陰天", "陣雨", "多雲"], "台中": ["大雨", "暴雨", "暴雨", "大雨"], "台南": ["大雨", "暴雨", "暴雨", "大雨"], "高雄": ["大雨", "暴雨", "暴雨", "大雨"]},
+                    "07-30": {"台北": ["多雲", "陰天", "陣雨", "多雲"], "新北": ["多雲", "陰天", "陣雨", "多雲"], "桃園": ["多雲", "陰天", "陣雨", "多雲"], "台中": ["大雨", "暴雨", "暴雨", "大雨"], "台南": ["大雨", "暴雨", "暴雨", "大雨"], "高雄": ["大雨", "暴雨", "暴雨", "大雨"]},
+                    "07-31": {"台北": ["多雲", "陰天", "陣雨", "多雲"], "新北": ["多雲", "陰天", "陣雨", "多雲"], "桃園": ["多雲", "陰天", "陣雨", "多雲"], "台中": ["大雨", "暴雨", "暴雨", "大雨"], "台南": ["大雨", "暴雨", "暴雨", "大雨"], "高雄": ["大雨", "暴雨", "暴雨", "大雨"]}
                 };
 
+                const historyData = ref({});
+
+                // 官方極速純讀取通道（不需要 Token 即可公開安全讀取）
                 const fetchCloudData = async () => {
-    isLoading.value = true;
-    try {
-        const res = await fetch(MY_CLOUD_URL);
-        if (res.ok) {
-            const cloudJSON = await res.json();
-            // 讀取 restful-api 的特定層級 data
-            if (cloudJSON && cloudJSON.data) historyData.value = cloudJSON.data;
-        }
-    } catch (e) { console.error(e); }
-    finally { isLoading.value = false; updateChart(); }
-};
+                    isLoading.value = true;
+                    try {
+                        const res = await fetch(`https://api.github.com/gists/${GIST_ID}?t=` + new Date().getTime());
+                        if (res.ok) {
+                            const gistData = await res.json();
+                            const contentStr = gistData.files["data.json"].content;
+                            const cloudJSON = JSON.parse(contentStr);
+                            if (cloudJSON) historyData.value = cloudJSON;
+                        }
+                    } catch (e) { console.error("加載雲端數據失敗：", e); }
+                    finally { isLoading.value = false; updateChart(); }
+                };
 
                 const activeKeys = computed(() => Object.keys(historyData.value).filter(k => historyData.value[k].hasData).sort());
                 const latestKey = computed(() => activeKeys.value.length > 0 ? activeKeys.value[activeKeys.value.length - 1] : '07-01');
@@ -181,6 +219,7 @@
                 const totalOnlineBooking = computed(() => Object.values(historyData.value).reduce((sum, d) => sum + (d.b2026 || 0), 0));
                 const totalCancelCount = computed(() => Object.values(historyData.value).reduce((sum, d) => sum + (d.c2026 || 0), 0));
                 const formattedYesterday = computed(() => `7/${parseInt(latestKey.value.substring(3)) - 1}`);
+                
                 const yesterdayOnlineBooking = computed(() => {
                     const limitDay = parseInt(latestKey.value.substring(3)) - 1;
                     let total = 0; for (let d = 1; d <= limitDay; d++) { total += (historyData.value[`07-${d < 10 ? '0' + d : d}`]?.b2026 || 0); } return total;
@@ -199,6 +238,7 @@
 
                 const transIcon = (w) => { return { '晴天':'☀️', '多雲':'☁️', '陰天':'🌥️', '陣雨':'🌧️', '雷陣雨':'⛈️', '大雨':'🌧️', '暴雨':'⛈️' }[w] || ''; };
                 const checkHasData = (day) => { return !!historyData.value[`07-${day < 10 ? '0' + day : day}`]?.hasData; };
+                
                 const getCalWeatherSlots = (day, city, year) => {
                     const key = `07-${day < 10 ? '0' + day : day}`;
                     return year === '2026' ? (historyData.value[key]?.w2026?.[city] || ['','','','']).map(w => transIcon(w)) : (weather2025All[key]?.[city] || ['☁️','☁️','☁️','☁️']).map(w => transIcon(w));
@@ -217,7 +257,25 @@
 
                 onMounted(() => {
                     const ctxL = document.getElementById('lineChart').getContext('2d');
-                    lineChart = new Chart(ctxL, { type: 'line', data: { labels: [], datasets: [{ label: '2026 今年預約', data: [], borderColor: '#ffcc00', backgroundColor: '#ffcc00', tension: 0.1, borderWidth: 3 }, { label: '2025 去年預約', data: [], borderColor: '#111111', backgroundColor: '#666666', tension: 0.1, borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: true, align: 'top' } } } });
+                    lineChart = new Chart(ctxL, { 
+                        type: 'line', 
+                        data: { labels: [], datasets: [{ label: '2026 今年預約', data: [], borderColor: '#ffcc00', backgroundColor: '#ffcc00', tension: 0.1, borderWidth: 3 }, { label: '2025 去年預約', data: [], borderColor: '#111111', backgroundColor: '#666666', tension: 0.1, borderWidth: 2 }] }, 
+                        options: { 
+                            responsive: true, 
+                            maintainAspectRatio: false, 
+                            plugins: { 
+                                datalabels: { 
+                                    display: true, 
+                                    align: 'top',
+                                    font: { size: 10, weight: 'bold' },
+                                    backgroundColor: (context) => context.dataset.borderColor,
+                                    color: (context) => context.dataset.borderColor === '#ffcc00' ? 'black' : 'white',
+                                    borderRadius: 4,
+                                    padding: 3
+                                } 
+                            } 
+                        } 
+                    });
                     fetchCloudData();
                 });
 

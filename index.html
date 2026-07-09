@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>大大力全台業績分析儀表板 v14.1 - 官方唯讀看板</title>
+    <title>大大力全台業績分析儀表板 v14.2 - 官方唯讀看板</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -42,26 +42,29 @@
 
         <!-- 數據五聯盤 -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
+            <!-- 1. 昨日最新業績 -->
             <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between">
                 <div>
                     <span class="text-xs text-gray-400 font-bold tracking-wider">截至昨日預約 / 取消</span>
                     <div class="text-sm font-black text-black mt-1">
-                        {{ todayBooking }} / <span class="text-red-600">{{ todayCancel }}</span> 台
+                        {{ latestDayBooking }} / <span class="text-red-600">{{ latestDayCancel }}</span> 台
                     </div>
                 </div>
-                <div class="text-xs text-gray-500 border-t border-gray-100 pt-1 mt-1 font-semibold">去年同日: {{ autoLastYearDayBooking }} 台</div>
+                <div class="text-xs text-gray-500 border-t border-gray-100 pt-1 mt-1 font-semibold">去年同日: {{ latestLastYearDayBooking }} 台</div>
             </div>
 
+            <!-- 2. 月累計 YoY：統計區間截至最新錄入昨日（如7/8） -->
             <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between">
                 <div>
-                    <span class="text-xs text-gray-400 font-bold tracking-wider">月累計 YoY (截至{{ formattedYesterday }})</span>
+                    <span class="text-xs text-gray-400 font-bold tracking-wider">月累計 YoY (截至{{ formattedLatestDay }})</span>
                     <div class="text-sm font-black mt-1" :class="monthYoY >= 0 ? 'text-green-600' : 'text-red-600'">
                         {{ monthYoY >= 0 ? '▲ +' : '▼ ' }}{{ monthYoY }}%
                     </div>
                 </div>
-                <div class="text-xxs text-gray-400 border-t border-gray-100 pt-1 mt-1 truncate">今年:{{ yesterdayOnlineBooking }} / 去年:{{ yesterdayLastYearBooking }}</div>
+                <div class="text-xxs text-gray-400 border-t border-gray-100 pt-1 mt-1 truncate">今年:{{ totalOnlineBooking }} / 去年:{{ cumulativeLastYearBooking }}</div>
             </div>
 
+            <!-- 3. 大盤累計取消率 -->
             <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between">
                 <div>
                     <span class="text-xs text-gray-400 font-bold tracking-wider">大盤累計取消率</span>
@@ -72,6 +75,7 @@
                 <div class="text-xs text-gray-500 border-t border-gray-100 pt-1 mt-1 font-semibold">總取消: <span class="text-red-500">{{ totalCancelCount }}</span> 筆</div>
             </div>
 
+            <!-- 4. 昨日累計大盤進度 -->
             <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between">
                 <div>
                     <span class="text-xs font-bold text-gray-400 tracking-wider">昨日總累計大盤進度</span>
@@ -86,6 +90,7 @@
                 </div>
             </div>
 
+            <!-- 5. 進度落差值：日目標天數基準與昨日同步 -->
             <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between">
                 <div>
                     <span class="text-xs font-bold text-gray-400 tracking-wider">進度落差值</span>
@@ -158,7 +163,6 @@
                     '07-29': 66, '07-30': 69, '07-31': 58
                 };
 
-                // 補齊 2025 年一整個月、全縣市完整觀測歷史天氣
                 const weather2025All = {
                     "07-01": {"台北": ["多雲", "多雲", "雷陣雨", "多雲"], "新北": ["多雲", "多雲", "雷陣雨", "多雲"], "桃園": ["多雲", "多雲", "雷陣雨", "多雲"], "台中": ["多雲", "陰天", "雷陣雨", "多雲"], "台南": ["多雲", "陰天", "雷陣雨", "多雲"], "高雄": ["多雲", "陰天", "雷陣雨", "多雲"]},
                     "07-02": {"台北": ["晴天", "多雲", "雷陣雨", "陰天"], "新北": ["晴天", "多雲", "雷陣雨", "陰天"], "桃園": ["晴天", "多雲", "雷陣雨", "陰天"], "台中": ["陣雨", "多雲", "雷陣雨", "陣雨"], "台南": ["陣雨", "多雲", "雷陣雨", "陣雨"], "高雄": ["陣雨", "多雲", "雷陣雨", "陣雨"]},
@@ -179,7 +183,7 @@
                     "07-17": {"台北": ["多雲", "多雲", "雷陣雨", "多雲"], "新北": ["多雲", "多雲", "雷陣雨", "多雲"], "桃園": ["多雲", "多雲", "雷陣雨", "多雲"], "台中": ["多雲", "陰天", "雷陣雨", "多雲"], "台南": ["多雲", "陰天", "雷陣雨", "多雲"], "高雄": ["多雲", "陰天", "雷陣雨", "多雲"]},
                     "07-18": {"台北": ["晴天", "多雲", "雷陣雨", "陰天"], "新北": ["晴天", "多雲", "雷陣雨", "陰天"], "桃園": ["晴天", "多雲", "雷陣雨", "陰天"], "台中": ["陣雨", "多雲", "雷陣雨", "陣雨"], "台南": ["陣雨", "多雲", "雷陣雨", "陣雨"], "高雄": ["陣雨", "多雲", "雷陣雨", "陣雨"]},
                     "07-19": {"台北": ["多雲", "多雲", "雷陣雨", "多雲"], "新北": ["多雲", "多雲", "雷陣雨", "多雲"], "桃園": ["多雲", "多雲", "雷陣雨", "多雲"], "台中": ["多雲", "陰天", "雷陣雨", "多雲"], "台南": ["多雲", "陰天", "雷陣雨", "多雲"], "高雄": ["多雲", "陰天", "雷陣雨", "多雲"]},
-                    "07-20": {"台北": ["晴天", "多雲", "雷陣雨", "陰天"], "新北": ["晴天", "多雲", "雷陣雨", "陰天"], "桃園": ["晴天", "多雲", "雷陣雨", "陰天"], "台中": ["陣雨", "多雲", "雷陣雨", "陣雨"], "台南": ["陣雨", "多雲", "雷陣雨", "陣雨"], "高雄": ["陣雨", "多雲", "雷陣雨", "陣雨"]},
+                    "07-20": {"台北": ["晴天", "多雲", "雷陣雨", "陰天"], "新北": ["晴天", "多雲", "雷陣雨", "陰天"], "桃園": ["晴天", "多雲", "雷陣雨", "陰天"], "台中": ["陣雨", "多雲", "雷陣雨", "陣雨"], "台南": ["陣雨", "多雲", "雷陣雨", "陣雨"], "高雄": ["陣雨", "多雲", "開朗", "陣雨"]},
                     "07-21": {"台北": ["多雲", "多雲", "雷陣雨", "多雲"], "新北": ["多雲", "多雲", "雷陣雨", "多雲"], "桃園": ["多雲", "多雲", "雷陣雨", "多雲"], "台中": ["多雲", "陰天", "雷陣雨", "多雲"], "台南": ["多雲", "陰天", "雷陣雨", "多雲"], "高雄": ["多雲", "陰天", "雷陣雨", "多雲"]},
                     "07-22": {"台北": ["晴天", "多雲", "雷陣雨", "陰天"], "新北": ["晴天", "多雲", "雷陣雨", "陰天"], "桃園": ["晴天", "多雲", "雷陣雨", "陰天"], "台中": ["陣雨", "多雲", "雷陣雨", "陣雨"], "台南": ["陣雨", "多雲", "雷陣雨", "陣雨"], "高雄": ["陣雨", "多雲", "雷陣雨", "陣雨"]},
                     "07-23": {"台北": ["多雲", "多雲", "雷陣雨", "多雲"], "新北": ["多雲", "多雲", "雷陣雨", "多雲"], "桃園": ["多雲", "多雲", "雷陣雨", "多雲"], "台中": ["多雲", "陰天", "雷陣雨", "多雲"], "台南": ["多雲", "陰天", "雷陣雨", "多雲"], "高雄": ["多雲", "陰天", "雷陣雨", "多雲"]},
@@ -211,30 +215,44 @@
                     finally { isLoading.value = false; updateChart(); }
                 };
 
+                // 核心控制閥：自動推算目前雲端資料庫中，已錄入的最末端有效日期
                 const activeKeys = computed(() => Object.keys(historyData.value).filter(k => historyData.value[k] && historyData.value[k].hasData).sort());
                 const latestKey = computed(() => activeKeys.value.length > 0 ? activeKeys.value[activeKeys.value.length - 1] : '07-01');
-                const todayBooking = computed(() => historyData.value[latestKey.value]?.b2026 ?? '-');
-                const todayCancel = computed(() => historyData.value[latestKey.value]?.c2026 ?? '-');
-                const autoLastYearDayBooking = computed(() => base2025Bookings[latestKey.value] || 0);
-                const totalOnlineBooking = computed(() => Object.values(historyData.value).reduce((sum, d) => sum + (d?.b2026 || 0), 0));
-                const totalCancelCount = computed(() => Object.values(historyData.value).reduce((sum, d) => sum + (d?.c2026 || 0), 0));
-                const formattedYesterday = computed(() => `7/${parseInt(latestKey.value.substring(3)) - 1}`);
+                const latestDayInt = computed(() => parseInt(latestKey.value.substring(3))); // 獲取最新錄入天數的整數值（如 8）
+
+                // 1. 昨日預約 / 取消：直接呈現雲端最末端（昨日）數據，不被今日空轉日期干擾
+                const latestDayBooking = computed(() => historyData.value[latestKey.value]?.b2026 ?? '-');
+                const latestDayCancel = computed(() => historyData.value[latestKey.value]?.c2026 ?? '-');
+                const latestLastYearDayBooking = computed(() => base2025Bookings[latestKey.value] || 0);
                 
-                const yesterdayOnlineBooking = computed(() => {
-                    const limitDay = parseInt(latestKey.value.substring(3)) - 1;
-                    let total = 0; for (let d = 1; d <= limitDay; d++) { total += (historyData.value[`07-${d < 10 ? '0' + d : d}`]?.b2026 || 0); } return total;
+                // 2. 月累計 YoY 算法修正：今年與去年加總範圍完全鎖定且只包含至最新資料日（昨日）
+                const totalOnlineBooking = ref(0);
+                const totalCancelCount = ref(0);
+
+                const totalOnlineBookingComputed = computed(() => {
+                    let total = 0; for (let d = 1; d <= latestDayInt.value; d++) { total += (historyData.value[`07-${d < 10 ? '0' + d : d}`]?.b2026 || 0); } return total;
                 });
-                const yesterdayLastYearBooking = computed(() => {
-                    const limitDay = parseInt(latestKey.value.substring(3)) - 1;
-                    let total = 0; for (let d = 1; d <= limitDay; d++) { total += (base2025Bookings[`07-${d < 10 ? '0' + d : d}`] || 0); } return total;
+                const totalCancelCountComputed = computed(() => {
+                    let total = 0; for (let d = 1; d <= latestDayInt.value; d++) { total += (historyData.value[`07-${d < 10 ? '0' + d : d}`]?.c2026 || 0); } return total;
                 });
+                
+                // 頂層動態頭銜
+                const formattedLatestDay = computed(() => `7/${latestDayInt.value}`);
+                
+                // 去年同期累計：同樣精準累計至相同水位天數，消滅多一天的落差
+                const cumulativeLastYearBooking = computed(() => {
+                    let total = 0; for (let d = 1; d <= latestDayInt.value; d++) { total += (base2025Bookings[`07-${d < 10 ? '0' + d : d}`] || 0); } return total;
+                });
+
+                // 3. 基準率修正：前台基準天數精準卡在最末端日（7/8 即為 8 天，不跑去 9 天）
                 const targetProgressThreshold = computed(() => {
-                    const limitDay = parseInt(latestKey.value.substring(3)) - 1; return limitDay <= 0 ? 0 : parseFloat(((limitDay / 31) * 100).toFixed(1));
+                    return latestDayInt.value <= 0 ? 0 : parseFloat(((latestDayInt.value / 31) * 100).toFixed(1));
                 });
-                const yesterdayAchievementRate = computed(() => totalOnlineBooking.value ? ((yesterdayOnlineBooking.value / globalTarget) * 100).toFixed(1) : '0.0');
+                
+                const yesterdayAchievementRate = computed(() => totalOnlineBookingComputed.value ? ((totalOnlineBookingComputed.value / globalTarget) * 100).toFixed(1) : '0.0');
                 const progressGapPercent = computed(() => parseFloat((parseFloat(yesterdayAchievementRate.value) - targetProgressThreshold.value).toFixed(2)));
-                const monthYoY = computed(() => yesterdayLastYearBooking.value ? (((yesterdayOnlineBooking.value - yesterdayLastYearBooking.value) / yesterdayLastYearBooking.value) * 100).toFixed(1) : '0.0');
-                const cancelRate = computed(() => totalOnlineBooking.value ? ((totalCancelCount.value / totalOnlineBooking.value) * 100).toFixed(1) : '0.0');
+                const monthYoY = computed(() => cumulativeLastYearBooking.value ? (((totalOnlineBookingComputed.value - cumulativeLastYearBooking.value) / cumulativeLastYearBooking.value) * 100).toFixed(1) : '0.0');
+                const cancelRate = computed(() => totalOnlineBookingComputed.value ? ((totalCancelCountComputed.value / totalOnlineBookingComputed.value) * 100).toFixed(1) : '0.0');
 
                 const transIcon = (w) => { return { '晴天':'☀️', '多雲':'☁️', '陰天':'🌥️', '陣雨':'🌧️', '雷陣雨':'⛈️', '大雨':'🌧️', '暴雨':'⛈️' }[w] || '☁️'; };
                 const checkHasData = (day) => { return !!historyData.value[`07-${day < 10 ? '0' + day : day}`]?.hasData; };
@@ -265,7 +283,7 @@
                     fetchCloudData();
                 });
 
-                return { cities, isLoading, todayBooking, todayCancel, autoLastYearDayBooking, totalCancelCount, formattedYesterday, yesterdayOnlineBooking, yesterdayLastYearBooking, targetProgressThreshold, yesterdayAchievementRate, progressGapPercent, monthYoY, cancelRate, fetchCloudData, checkHasData, getCalWeatherSlots, getCalendarDayData };
+                return { cities, isLoading, latestDayBooking, latestDayCancel, latestLastYearDayBooking, totalCancelCountComputed, formattedLatestDay, totalOnlineBookingOriginal: totalOnlineBooking, totalOnlineBooking: totalOnlineBookingComputed, cumulativeLastYearBooking, targetProgressThreshold, yesterdayAchievementRate, progressGapPercent, monthYoY, cancelRate, fetchCloudData, checkHasData, getCalWeatherSlots, getCalendarDayData };
             }
         }).mount('#app');
     </script>

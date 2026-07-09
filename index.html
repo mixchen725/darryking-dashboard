@@ -2,16 +2,10 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>大大力分析儀表板 - 恢復穩定版</title>
+    <title>大大力業績分析儀表板</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        .dk-bg-yellow { background-color: #ffcc00; }
-        .dk-text-yellow { color: #ffcc00; }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #ffcc00; }
-    </style>
 </head>
 <body class="bg-gray-50 p-4 text-xs">
     <div id="app" class="max-w-7xl mx-auto space-y-4">
@@ -20,26 +14,22 @@
             <button @click="fetchCloudData" class="bg-black text-white px-3 py-1 rounded">🔄 同步</button>
         </header>
 
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
-            <div class="bg-white p-3 rounded-lg border shadow-sm"><div>昨日預約/取消</div><div class="font-black text-sm">{{ latestBooking }} / <span class="text-red-500">{{ latestCancel }}</span></div></div>
-            <div class="bg-white p-3 rounded-lg border shadow-sm"><div>累計 YoY</div><div class="font-black text-sm">{{ monthYoY }}%</div></div>
-            <div class="bg-white p-3 rounded-lg border shadow-sm"><div>累計取消率</div><div class="font-black text-sm text-red-500">{{ cancelRate }}%</div></div>
-            <div class="bg-white p-3 rounded-lg border shadow-sm"><div>大盤達成率</div><div class="font-black text-sm">{{ achievement }}%</div></div>
-            <div class="bg-white p-3 rounded-lg border shadow-sm"><div>落差值</div><div class="font-black text-sm">{{ gap }}%</div></div>
-        </div>
-
-        <div class="bg-white p-4 rounded-xl shadow-sm h-64">
+        <div class="bg-white p-4 rounded-xl shadow-sm h-64 border">
             <canvas id="lineChart"></canvas>
         </div>
 
-        <div class="bg-white rounded-xl border overflow-hidden">
-            <div @click="isExpanded = !isExpanded" class="bg-black p-3 text-white font-black cursor-pointer">
-                📅 每日台數觀測大盤 {{ isExpanded ? '[-]' : '[+]' }}
+        <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+            <div @click="isExpanded = !isExpanded" class="bg-black p-3 text-white font-black cursor-pointer flex justify-between">
+                <span>📅 7月份 每日台數觀測大盤</span>
+                <span>{{ isExpanded ? '[-]' : '[+]' }}</span>
             </div>
+            
             <div v-show="isExpanded" class="p-2 grid grid-cols-7 gap-1 bg-gray-100">
-                <div v-for="d in 31" class="bg-white p-1 rounded border min-h-[60px]">
-                    <div class="font-bold border-b">7/{{ d }}</div>
-                    <div class="text-[10px]">{{ getBooking(d) }}</div>
+                <div v-for="w in ['日','一','二','三','四','五','六']" class="text-center font-bold py-1">{{ w }}</div>
+                <div class="bg-white rounded border"></div><div class="bg-white rounded border"></div>
+                <div v-for="d in 31" class="bg-white p-1 rounded border min-h-[80px]">
+                    <div class="font-bold border-b mb-1">7/{{ d }}</div>
+                    <div class="font-black">{{ getBooking(d) }}</div>
                 </div>
             </div>
         </div>
@@ -52,12 +42,13 @@
         createApp({
             setup() {
                 const history = ref({});
-                const isExpanded = ref(false);
+                const isExpanded = ref(true); // 預設展開，點擊標題即可閉合
                 
                 const fetchCloudData = async () => {
                     const res = await fetch(`https://api.github.com/gists/${GIST_ID}`);
                     const d = await res.json();
-                    history.value = JSON.parse(d.files["data.json"].content);
+                    const fileName = Object.keys(d.files)[0];
+                    history.value = JSON.parse(d.files[fileName].content);
                     updateChart();
                 };
 
@@ -74,7 +65,7 @@
                     const ctx = document.getElementById('lineChart').getContext('2d');
                     chart = new Chart(ctx, { 
                         type: 'line', 
-                        data: { labels: [], datasets: [{ label: '2026', data: [], borderColor: '#ffcc00' }] },
+                        data: { labels: [], datasets: [{ label: '今年', data: [], borderColor: '#ffcc00' }] },
                         options: { responsive: true, maintainAspectRatio: false }
                     });
                     fetchCloudData();
@@ -82,10 +73,7 @@
 
                 return { 
                     isExpanded, fetchCloudData,
-                    latestBooking: computed(() => Object.values(history.value).slice(-1)[0]?.b2026 || '-'),
-                    latestCancel: computed(() => Object.values(history.value).slice(-1)[0]?.c2026 || '-'),
-                    monthYoY: computed(() => '0.0'), cancelRate: computed(() => '0.0'), achievement: computed(() => '0.0'), gap: computed(() => '0.0'),
-                    getBooking: (d) => history.value[`07-${d<10?'0'+d:d}`]?.b2026 || ''
+                    getBooking: (d) => history.value[`07-${d<10?'0'+d:d}`]?.b2026 || '' 
                 };
             }
         }).mount('#app');

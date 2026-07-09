@@ -7,6 +7,8 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- 引入 Chart.js DataLabels 外掛，用來顯示折線圖上的數字 -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <style>
         .dk-bg-yellow { background-color: #ffcc00; }
         .dk-text-yellow { color: #ffcc00; }
@@ -98,7 +100,7 @@
             <div class="border-l-4 dk-border-yellow pl-2 mb-3">
                 <h3 class="text-xs font-black text-black">📈 7月份 全台每日預約台數動態走勢圖</h3>
             </div>
-            <div class="h-52 w-full">
+            <div class="h-64 w-full"> <!-- 稍微調高圖表容器高度，給予數字更多垂直空間 -->
                 <canvas id="lineChart"></canvas>
             </div>
         </div>
@@ -155,7 +157,7 @@
             setup() {
                 const cities = ['台北', '新北', '桃園', '台中', '台南', '高雄'];
                 const globalTarget = 1600; const isLoading = ref(false); const historyData = ref({});
-                const isCalendarExpanded = ref(true); // 預設展開，方便直接檢視
+                const isCalendarExpanded = ref(true);
 
                 const base2025Bookings = {
                     '07-01': 52, '07-02': 50, '07-03': 63, '07-04': 56, '07-05': 65, '07-06': 53, '07-07': 58,
@@ -235,10 +237,69 @@
 
                 onMounted(() => {
                     const ctxL = document.getElementById('lineChart').getContext('2d');
+                    
+                    // 註冊 DataLabels 外掛套件
+                    Chart.register(ChartDataLabels);
+
                     lineChart = new Chart(ctxL, { 
                         type: 'line', 
-                        data: { labels: [], datasets: [{ label: '今年', data: [], borderColor: '#ffcc00', backgroundColor: '#ffcc00', tension: 0.1, borderWidth: 3 }, { label: '去年', data: [], borderColor: '#111111', backgroundColor: '#666666', tension: 0.1, borderWidth: 2 }] }, 
-                        options: { responsive: true, maintainAspectRatio: false } 
+                        data: { 
+                            labels: [], 
+                            datasets: [
+                                { 
+                                    label: '今年', 
+                                    data: [], 
+                                    borderColor: '#ffcc00', 
+                                    backgroundColor: '#ffcc00', 
+                                    tension: 0.1, 
+                                    borderWidth: 3,
+                                    // 🚀 今年線的資料標籤設定
+                                    datalabels: {
+                                        align: 'top',    // 固定在節點上方
+                                        anchor: 'end',
+                                        color: '#b38f00', // 深黃色方便閱讀
+                                        offset: 4
+                                    }
+                                }, 
+                                { 
+                                    label: '去年', 
+                                    data: [], 
+                                    borderColor: '#111111', 
+                                    backgroundColor: '#666666', 
+                                    tension: 0.1, 
+                                    borderWidth: 2,
+                                    // 🚀 去年線的資料標籤設定
+                                    datalabels: {
+                                        align: 'bottom', // 固定在節點下方
+                                        anchor: 'start',
+                                        color: '#444444', // 深灰色
+                                        offset: 4
+                                    }
+                                }
+                            ] 
+                        }, 
+                        options: { 
+                            responsive: true, 
+                            maintainAspectRatio: false,
+                            layout: {
+                                padding: {
+                                    top: 15, // 頂部留點空間避免數字被邊框切到
+                                    bottom: 15
+                                }
+                            },
+                            plugins: {
+                                // 🚀 全域資料標籤樣式調整
+                                datalabels: {
+                                    font: {
+                                        weight: 'bold',
+                                        size: 10
+                                    },
+                                    formatter: function(value) {
+                                        return value; // 直接顯示數字
+                                    }
+                                }
+                            }
+                        } 
                     });
                     fetchCloudData();
                 });

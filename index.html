@@ -137,8 +137,7 @@
 
     <script>
         // ⚠️ 這裡的網址必須和後台輸入網頁的網址完全相同 ⚠️
-        const MY_CLOUD_URL = "https://api.myjson.online/v1/records/86002da7-2e77-4aa2-b830-921baa7742fe";
-
+        const MY_CLOUD_URL = "https://api.restful-api.dev/objects/ff80818190774226_darryking_v13";
         const { createApp, ref, computed, onMounted } = Vue;
         Chart.register(ChartDataLabels);
 
@@ -162,16 +161,17 @@
                 };
 
                 const fetchCloudData = async () => {
-                    isLoading.value = true;
-                    try {
-                        const res = await fetch(MY_CLOUD_URL);
-                        if (res.ok) {
-                            const cloudJSON = await res.json();
-                            if (cloudJSON && cloudJSON.data) historyData.value = cloudJSON.data;
-                        }
-                    } catch (e) { console.error(e); }
-                    finally { isLoading.value = false; updateChart(); }
-                };
+    isLoading.value = true;
+    try {
+        const res = await fetch(MY_CLOUD_URL);
+        if (res.ok) {
+            const cloudJSON = await res.json();
+            // 讀取 restful-api 的特定層級 data
+            if (cloudJSON && cloudJSON.data) historyData.value = cloudJSON.data;
+        }
+    } catch (e) { console.error(e); }
+    finally { isLoading.value = false; updateChart(); }
+};
 
                 const activeKeys = computed(() => Object.keys(historyData.value).filter(k => historyData.value[k].hasData).sort());
                 const latestKey = computed(() => activeKeys.value.length > 0 ? activeKeys.value[activeKeys.value.length - 1] : '07-01');

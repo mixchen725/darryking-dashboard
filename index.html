@@ -7,8 +7,8 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- 引入 Chart.js DataLabels 外掛，用來顯示折線圖上的數字 -->
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <!-- 🚀 更換為最穩定的 chartjs-plugin-datalabels 2.x 版本 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <style>
         .dk-bg-yellow { background-color: #ffcc00; }
         .dk-text-yellow { color: #ffcc00; }
@@ -100,7 +100,7 @@
             <div class="border-l-4 dk-border-yellow pl-2 mb-3">
                 <h3 class="text-xs font-black text-black">📈 7月份 全台每日預約台數動態走勢圖</h3>
             </div>
-            <div class="h-64 w-full"> <!-- 稍微調高圖表容器高度，給予數字更多垂直空間 -->
+            <div class="h-64 w-full"> 
                 <canvas id="lineChart"></canvas>
             </div>
         </div>
@@ -238,11 +238,10 @@
                 onMounted(() => {
                     const ctxL = document.getElementById('lineChart').getContext('2d');
                     
-                    // 註冊 DataLabels 外掛套件
-                    Chart.register(ChartDataLabels);
-
                     lineChart = new Chart(ctxL, { 
                         type: 'line', 
+                        // 🚀 關鍵修正：將外掛元件直接嵌入此圖表實例中
+                        plugins: [ChartDataLabels],
                         data: { 
                             labels: [], 
                             datasets: [
@@ -253,12 +252,16 @@
                                     backgroundColor: '#ffcc00', 
                                     tension: 0.1, 
                                     borderWidth: 3,
-                                    // 🚀 今年線的資料標籤設定
+                                    // 🚀 今年的資料數字標籤設定
                                     datalabels: {
-                                        align: 'top',    // 固定在節點上方
-                                        anchor: 'end',
-                                        color: '#b38f00', // 深黃色方便閱讀
-                                        offset: 4
+                                        align: 'top',      // 靠節點上方
+                                        anchor: 'end',     // 錨定在頂端
+                                        color: '#b38f00',   // 深黃色方便辨識
+                                        offset: 6,         // 與線條拉開 6 像素，避免擠在一起
+                                        font: { weight: 'bold', size: 10 },
+                                        // 加上文字白色陰影背景，無論背景如何都能看清楚
+                                        textStrokeColor: '#ffffff',
+                                        textStrokeWidth: 2
                                     }
                                 }, 
                                 { 
@@ -268,12 +271,15 @@
                                     backgroundColor: '#666666', 
                                     tension: 0.1, 
                                     borderWidth: 2,
-                                    // 🚀 去年線的資料標籤設定
+                                    // 🚀 去年的資料數字標籤設定
                                     datalabels: {
-                                        align: 'bottom', // 固定在節點下方
-                                        anchor: 'start',
-                                        color: '#444444', // 深灰色
-                                        offset: 4
+                                        align: 'bottom',   // 靠節點下方
+                                        anchor: 'start',    // 錨定在底端
+                                        color: '#222222',   // 深灰色
+                                        offset: 6,         // 與線條拉開 6 像素
+                                        font: { weight: 'bold', size: 10 },
+                                        textStrokeColor: '#ffffff',
+                                        textStrokeWidth: 2
                                     }
                                 }
                             ] 
@@ -283,20 +289,14 @@
                             maintainAspectRatio: false,
                             layout: {
                                 padding: {
-                                    top: 15, // 頂部留點空間避免數字被邊框切到
-                                    bottom: 15
+                                    top: 20,    // 大盤頂部多留點緩衝空間，讓第一名的數字不被切掉
+                                    bottom: 20
                                 }
                             },
                             plugins: {
-                                // 🚀 全域資料標籤樣式調整
+                                // 🚀 關閉預設的隱藏設定，強制啟用外掛
                                 datalabels: {
-                                    font: {
-                                        weight: 'bold',
-                                        size: 10
-                                    },
-                                    formatter: function(value) {
-                                        return value; // 直接顯示數字
-                                    }
+                                    display: true 
                                 }
                             }
                         } 

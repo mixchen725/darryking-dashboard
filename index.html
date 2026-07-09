@@ -7,7 +7,6 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- 🚀 更換為最穩定的 chartjs-plugin-datalabels 2.x 版本 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <style>
         .dk-bg-yellow { background-color: #ffcc00; }
@@ -240,7 +239,6 @@
                     
                     lineChart = new Chart(ctxL, { 
                         type: 'line', 
-                        // 🚀 關鍵修正：將外掛元件直接嵌入此圖表實例中
                         plugins: [ChartDataLabels],
                         data: { 
                             labels: [], 
@@ -252,14 +250,23 @@
                                     backgroundColor: '#ffcc00', 
                                     tension: 0.1, 
                                     borderWidth: 3,
-                                    // 🚀 今年的資料數字標籤設定
                                     datalabels: {
-                                        align: 'top',      // 靠節點上方
-                                        anchor: 'end',     // 錨定在頂端
-                                        color: '#b38f00',   // 深黃色方便辨識
-                                        offset: 6,         // 與線條拉開 6 像素，避免擠在一起
+                                        // 🚀 智慧判定位置：如果今年數據 >= 去年數據，就放上面(top)，否則放下面(bottom)
+                                        align: function(context) {
+                                            const index = context.dataIndex;
+                                            const thisYearVal = context.dataset.data[index];
+                                            const lastYearVal = context.chart.data.datasets[1].data[index];
+                                            return (thisYearVal >= lastYearVal) ? 'top' : 'bottom';
+                                        },
+                                        anchor: function(context) {
+                                            const index = context.dataIndex;
+                                            const thisYearVal = context.dataset.data[index];
+                                            const lastYearVal = context.chart.data.datasets[1].data[index];
+                                            return (thisYearVal >= lastYearVal) ? 'end' : 'start';
+                                        },
+                                        color: '#b38f00',   
+                                        offset: 7,         
                                         font: { weight: 'bold', size: 10 },
-                                        // 加上文字白色陰影背景，無論背景如何都能看清楚
                                         textStrokeColor: '#ffffff',
                                         textStrokeWidth: 2
                                     }
@@ -271,12 +278,22 @@
                                     backgroundColor: '#666666', 
                                     tension: 0.1, 
                                     borderWidth: 2,
-                                    // 🚀 去年的資料數字標籤設定
                                     datalabels: {
-                                        align: 'bottom',   // 靠節點下方
-                                        anchor: 'start',    // 錨定在底端
-                                        color: '#222222',   // 深灰色
-                                        offset: 6,         // 與線條拉開 6 像素
+                                        // 🚀 智慧判定位置：如果去年數據 > 今年數據，就放上面(top)，否則放下面(bottom)
+                                        align: function(context) {
+                                            const index = context.dataIndex;
+                                            const lastYearVal = context.dataset.data[index];
+                                            const thisYearVal = context.chart.data.datasets[0].data[index];
+                                            return (lastYearVal > thisYearVal) ? 'top' : 'bottom';
+                                        },
+                                        anchor: function(context) {
+                                            const index = context.dataIndex;
+                                            const lastYearVal = context.dataset.data[index];
+                                            const thisYearVal = context.chart.data.datasets[0].data[index];
+                                            return (lastYearVal > thisYearVal) ? 'end' : 'start';
+                                        },
+                                        color: '#222222',   
+                                        offset: 7,         
                                         font: { weight: 'bold', size: 10 },
                                         textStrokeColor: '#ffffff',
                                         textStrokeWidth: 2
@@ -288,16 +305,10 @@
                             responsive: true, 
                             maintainAspectRatio: false,
                             layout: {
-                                padding: {
-                                    top: 20,    // 大盤頂部多留點緩衝空間，讓第一名的數字不被切掉
-                                    bottom: 20
-                                }
+                                padding: { top: 20, bottom: 20 }
                             },
                             plugins: {
-                                // 🚀 關閉預設的隱藏設定，強制啟用外掛
-                                datalabels: {
-                                    display: true 
-                                }
+                                datalabels: { display: true }
                             }
                         } 
                     });

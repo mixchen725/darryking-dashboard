@@ -17,7 +17,7 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #ffcc00; border-radius: 2px; }
     </style>
 </head>
-<body class="bg-gray-50 font-sans p-4 text-gray-900 text-xs">
+<body class="bg-gray-100 font-sans p-4 text-gray-900 text-xs">
 
     <div id="app" class="max-w-7xl mx-auto space-y-4">
         <header class="flex flex-col md:flex-row md:items-center md:justify-between border-b-4 border-black pb-3 bg-white p-4 rounded-xl shadow-sm">
@@ -39,101 +39,153 @@
             </div>
         </header>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
-            <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between">
-                <div>
-                    <span class="text-xs text-gray-400 font-bold tracking-wider">昨日預約 / 取消</span>
-                    <div class="text-sm font-black text-black mt-1">
-                        {{ latestDayBooking }} / <span class="text-red-600">{{ latestDayCancel }}</span> 台
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 text-xs">
+                    <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between">
+                        <div>
+                            <span class="text-xs text-gray-400 font-bold tracking-wider">昨日預約 / 取消 ({{ formattedLatestDay }})</span>
+                            <div class="text-sm font-black text-black mt-1">{{ latestDayBooking }} / <span class="text-red-600">{{ latestDayCancel }}</span> 台</div>
+                        </div>
+                        <div class="text-xs text-gray-500 border-t border-gray-100 pt-1 mt-1 font-semibold">去年同日: {{ latestLastYearDayBooking }} 台</div>
                     </div>
-                </div>
-                <div class="text-xs text-gray-500 border-t border-gray-100 pt-1 mt-1 font-semibold">去年同日: {{ latestLastYearDayBooking }} 台</div>
-            </div>
+                    
+                    <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between">
+                        <div>
+                            <span class="text-xs text-gray-400 font-bold tracking-wider">月累計 YoY (截至{{ formattedLatestDay }})</span>
+                            <div class="text-sm font-black mt-1" :class="monthYoY >= 0 ? 'text-green-600' : 'text-red-600'">{{ monthYoY >= 0 ? '▲ +' : '▼ ' }}{{ monthYoY }}%</div>
+                        </div>
+                        <div class="text-xxs text-gray-400 border-t border-gray-100 pt-1 mt-1 truncate">今年:{{ totalOnlineBooking }} / 去年:{{ cumulativeLastYearBooking }}</div>
+                    </div>
 
-            <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between">
-                <div>
-                    <span class="text-xs text-gray-400 font-bold tracking-wider">月累計 YoY (截至{{ formattedLatestDay }})</span>
-                    <div class="text-sm font-black mt-1" :class="monthYoY >= 0 ? 'text-green-600' : 'text-red-600'">
-                        {{ monthYoY >= 0 ? '▲ +' : '▼ ' }}{{ monthYoY }}%
+                    <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between">
+                        <div>
+                            <span class="text-xs text-gray-400 font-bold tracking-wider">月累計 MoM (截至{{ formattedLatestDay }})</span>
+                            <div class="text-sm font-black mt-1" :class="monthMoM >= 0 ? 'text-green-600' : 'text-red-600'">{{ monthMoM >= 0 ? '▲ +' : '▼ ' }}{{ monthMoM }}%</div>
+                        </div>
+                        <div class="text-xxs text-gray-400 border-t border-gray-100 pt-1 mt-1 truncate">本月:{{ totalOnlineBooking }} / 上月同期:{{ cumulativePrevMonthBooking }}</div>
+                    </div>
+                    
+                    <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between">
+                        <div><span class="text-xs text-gray-400 font-bold tracking-wider">當月累計取消率</span><div class="text-sm font-black mt-1" :class="cancelRate > 18 ? 'text-red-600' : 'text-green-600'">{{ cancelRate }}%</div></div>
+                        <div class="text-xs text-gray-500 border-t border-gray-100 pt-1 mt-1 font-semibold">總取消: <span class="text-red-500">{{ totalCancelCount }}</span> 筆</div>
+                    </div>
+                    
+                    <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between">
+                        <div><span class="text-xs font-bold text-gray-400 tracking-wider">當月累計大盤進度</span><div class="text-sm font-black mt-1">{{ yesterdayAchievementRate }}%</div></div>
+                        <div class="w-full bg-gray-100 rounded-full h-2 mt-1 border border-gray-200 overflow-hidden"><div class="h-full dk-bg-yellow" :style="{ width: Math.min(yesterdayAchievementRate, 100) + '%' }"></div></div>
+                    </div>
+                    
+                    <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between">
+                        <div><span class="text-xs font-bold text-gray-400 tracking-wider">進度落差值</span><div class="text-sm font-black mt-1" :class="progressGapPercent >= 0 ? 'text-green-600' : 'text-red-600'">{{ progressGapPercent >= 0 ? '▲ +' : '▼ ' }}{{ progressGapPercent }}%</div></div>
+                        <div class="text-xs text-gray-400 border-t border-gray-100 pt-1 mt-1 truncate">日目標基準: {{ targetProgressThreshold }}%</div>
                     </div>
                 </div>
-                <div class="text-xxs text-gray-400 border-t border-gray-100 pt-1 mt-1 truncate">今年:{{ totalOnlineBooking }} / 去年:{{ cumulativeLastYearBooking }}</div>
-            </div>
-
-            <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between">
-                <div>
-                    <span class="text-xs text-gray-400 font-bold tracking-wider">大盤累計取消率</span>
-                    <div class="text-sm font-black mt-1" :class="cancelRate > 18 ? 'text-red-600' : 'text-green-600'">
-                        {{ cancelRate }}%
-                    </div>
-                </div>
-                <div class="text-xs text-gray-500 border-t border-gray-100 pt-1 mt-1 font-semibold">總取消: <span class="text-red-500">{{ totalCancelCount }}</span> 筆</div>
-            </div>
-
-            <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between">
-                <div>
-                    <span class="text-xs font-bold text-gray-400 tracking-wider">昨日總累計大盤進度</span>
-                    <div class="text-sm font-black mt-1" :class="yesterdayAchievementRate >= targetProgressThreshold ? 'text-green-600' : 'text-red-600'">
-                        {{ yesterdayAchievementRate }}%
-                    </div>
-                </div>
-                <div class="w-full bg-gray-100 rounded-full h-2 mt-1 overflow-hidden border border-gray-200">
-                    <div class="h-full rounded-full transition-all duration-500" 
-                         :class="yesterdayAchievementRate >= targetProgressThreshold ? 'dk-bg-yellow' : 'bg-red-500'" 
-                         :style="{ width: Math.min(yesterdayAchievementRate, 100) + '%' }"></div>
-                </div>
-            </div>
-
-            <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between">
-                <div>
-                    <span class="text-xs font-bold text-gray-400 tracking-wider">進度落差值</span>
-                    <div class="text-sm font-black mt-1" :class="progressGapPercent >= 0 ? 'text-green-600' : 'text-red-600'">
-                        {{ progressGapPercent >= 0 ? '▲ +' : '▼ ' }}{{ progressGapPercent }}%
-                    </div>
-                </div>
-                <div class="text-xs text-gray-400 border-t border-gray-100 pt-1 mt-1 truncate">日目標基準: {{ targetProgressThreshold }}%</div>
-            </div>
-        </div>
 
         <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-            <div class="border-l-4 dk-border-yellow pl-2 mb-3">
-                <h3 class="text-xs font-black text-black">📈 7月份 全台每日預約台數動態走勢圖</h3>
-            </div>
-            <div class="h-64 w-full"> 
-                <canvas id="lineChart"></canvas>
-            </div>
-        </div>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div class="border-l-4 border-blue-500 pl-2">
+                            <h3 class="text-xs font-black text-black">📊 週次對比動態走勢圖 (一~日)</h3>
+                        </div>
+                        <div class="mt-2 sm:mt-0 flex items-center gap-3">
+                            <span class="text-xxs font-bold text-gray-500">選擇顯示週次：</span>
+                            <select v-model="selectedWeek" @change="updateWeeklyChart" class="p-1.5 border-2 border-gray-300 rounded-lg focus:border-black outline-none font-bold text-xs cursor-pointer bg-gray-50">
+                                <option value="W27">W27 (6/29 - 7/5)</option>
+                                <option value="W28">W28 (7/6 - 7/12)</option>
+                                <option value="W29">W29 (7/13 - 7/19)</option>
+                                <option value="W30">W30 (7/20 - 7/26)</option>
+                                <option value="W31">W31 (7/27 - 8/2)</option>
+                                <option value="W32">W32 (8/3 - 8/9)</option>
+                                <option value="W33">W33 (8/10 - 8/16)</option>
+                                <option value="W34">W34 (8/17 - 8/23)</option>
+                                <option value="W35">W35 (8/24 - 8/30)</option>
+                                <option value="W36">W36 (8/31 - 9/6)</option>
+                                <option value="W37">W37 (9/7 - 9/13)</option>
+                                <option value="W38">W38 (9/14 - 9/20)</option>
+                                <option value="W39">W39 (9/21 - 9/27)</option>
+                                <option value="W40">W40 (9/28 - 10/4)</option>
+                                <option value="W41">W41 (10/5 - 10/11)</option>
+                                <option value="W42">W42 (10/12 - 10/18)</option>
+                                <option value="W43">W43 (10/19 - 10/25)</option>
+                                <option value="W44">W44 (10/26 - 11/1)</option>
+                                <option value="W45">W45 (11/2 - 11/8)</option>
+                                <option value="W46">W46 (11/9 - 11/15)</option>
+                                <option value="W47">W47 (11/16 - 11/22)</option>
+                                <option value="W48">W48 (11/23 - 11/29)</option>
+                                <option value="W49">W49 (11/30 - 12/6)</option>
+                                <option value="W50">W50 (12/7 - 12/13)</option>
+                                <option value="W51">W51 (12/14 - 12/20)</option>
+                                <option value="W52">W52 (12/21 - 12/27)</option>
+                                <option value="W53">W53 (12/28 - 1/3)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="h-64 w-full"><canvas id="weeklyChart"></canvas></div>
+                </div>
+
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div class="border-l-4 dk-border-yellow pl-2">
+                            <h3 class="text-xs font-black text-black">📈 每日預約台數動態走勢圖 (全月)</h3>
+                        </div>
+                        <div class="mt-2 sm:mt-0 flex items-center gap-3">
+                            <span class="text-xxs font-bold text-gray-500">選擇顯示月份：</span>
+                            <select v-model="selectedMonth" @change="onChartMonthChange" class="p-1.5 border-2 border-gray-300 rounded-lg focus:border-black outline-none font-bold text-xs cursor-pointer bg-gray-50">
+                                <option value="07">2026/7</option>
+                                <option value="08">2026/8</option>
+                                <option value="09">2026/9</option>
+                                <option value="10">2026/10</option>
+                                <option value="11">2026/11</option>
+                                <option value="12">2026/12</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="h-64 w-full"><canvas id="lineChart"></canvas></div>
+                </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div @click="isCalendarExpanded = !isCalendarExpanded" 
-                 class="bg-black p-3 flex items-center justify-between cursor-pointer select-none transition-colors hover:bg-gray-900">
+                 class="bg-black p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 cursor-pointer select-none transition-colors hover:bg-gray-900">
                 <div class="flex items-center space-x-2">
                     <span class="text-sm">📅</span>
-                    <h3 class="text-xs font-black text-white tracking-wider">7月份 每日台數與天氣概況觀測大盤</h3>
+                    <h3 class="text-xs font-black text-white tracking-wider">{{ calendarMonthLabel }}月份 每日台數與天氣概況觀測大盤</h3>
                 </div>
-                <div class="text-xxs font-black px-2.5 py-1 rounded border border-yellow-400 bg-yellow-400 text-black shadow-sm transition-all">
-                    {{ isCalendarExpanded ? '📁 收合大盤' : '📂 展開大盤' }}
+                <div class="flex items-center space-x-3 sm:space-x-4">
+                    <div class="hidden sm:flex gap-3 text-xxs font-bold text-gray-300">
+                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 dk-bg-yellow border border-black rounded"></span>今年預約</span>
+                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-white border border-gray-400 rounded"></span>去年預約</span>
+                    </div>
+                    <div @click.stop class="flex items-center gap-1.5">
+                        <span class="text-xxs font-bold text-gray-300 hidden sm:inline">月份：</span>
+                        <select v-model="calendarMonth" class="p-1 border-2 border-gray-600 rounded-lg focus:border-yellow-400 outline-none font-bold text-xs cursor-pointer bg-white text-black">
+                            <option value="07">2026/7</option>
+                            <option value="08">2026/8</option>
+                            <option value="09">2026/9</option>
+                            <option value="10">2026/10</option>
+                            <option value="11">2026/11</option>
+                            <option value="12">2026/12</option>
+                        </select>
+                    </div>
+                    <div class="text-xxs font-black px-2.5 py-1 rounded border border-yellow-400 bg-yellow-400 text-black shadow-sm transition-all whitespace-nowrap">
+                        {{ isCalendarExpanded ? '📁 收合大盤' : '📂 展開大盤' }}
+                    </div>
                 </div>
             </div>
             
             <div v-show="isCalendarExpanded" class="p-3 border-t border-gray-200 bg-gray-50">
-                <div class="grid grid-cols-7 gap-1 bg-gray-900 p-1.5 rounded-xl text-xs">
-                    <div v-for="w in ['日','一','二','三','四','五','六']" :key="w" class="text-center font-black py-1 dk-text-yellow">
-                        {{ w }}
+                <div class="grid grid-cols-7 gap-1.5 bg-white border border-gray-200 p-1.5 rounded-xl text-xs">
+                    <div v-for="w in 7" :key="w" class="text-center font-black py-1.5 rounded-lg bg-yellow-50 border border-yellow-200 text-black text-xs">
+                        {{ ['日','一','二','三','四','五','六'][w-1] }}
                     </div>
-                    <div class="bg-gray-800 opacity-20 rounded-lg p-1 min-h-[140px]"></div>
-                    <div class="bg-gray-800 opacity-20 rounded-lg p-1 min-h-[140px]"></div>
+                    <div v-for="b in calendarLeadingBlanks" :key="'blank'+b" class="bg-gray-50 border border-gray-100 rounded-lg p-1 min-h-[140px]"></div>
                     
-                    <div v-for="day in 31" :key="day" class="rounded-lg p-1.5 min-h-[140px] border flex flex-col justify-between bg-white shadow-sm" :class="checkHasData(day) ? 'opacity-100':'opacity-30'">
+                    <div v-for="day in calendarDaysCount" :key="day" class="rounded-lg p-1.5 min-h-[140px] flex flex-col justify-between bg-white shadow-sm transition-all" :class="checkHasData(day) ? 'border-2 border-yellow-400' : 'border border-gray-200'">
                         <div class="flex items-center justify-between border-b border-gray-100 pb-1">
-                            <span class="font-black text-gray-900">7/{{ day }}</span>
-                            <div class="flex gap-1">
-                                <span class="px-1.5 py-0.2 rounded font-black border border-black dk-bg-yellow text-black">{{ getCalendarDayData(day, '2026') }}</span>
-                                <span class="px-1.5 py-0.2 rounded font-bold bg-black text-white">{{ getCalendarDayData(day, '2025') }}</span>
+                            <span class="font-black" :class="checkHasData(day) ? 'text-gray-900' : 'text-gray-400'">{{ calendarMonthLabel }}/{{ day }}</span>
+                            <div class="flex gap-1 text-xxs">
+                                <span class="px-1 py-0.2 rounded font-black border" :class="checkHasData(day) ? 'border-black dk-bg-yellow text-black' : 'border-gray-200 bg-gray-100 text-gray-400'">{{ getCalendarDayData(day, '2026') }}</span>
+                                <span class="px-1 py-0.2 rounded font-bold bg-black text-white">{{ getCalendarDayData(day, '2025') }}</span>
                             </div>
                         </div>
-                        
-                        <div class="space-y-1 mt-1 overflow-y-auto max-h-[95px] custom-scrollbar">
+                        <div class="space-y-1 mt-1 overflow-y-auto max-h-[95px] custom-scrollbar text-xxs scale-95 origin-left" :class="checkHasData(day) ? '' : 'opacity-50'">
                             <div v-for="city in cities" :key="city" class="border-b border-gray-50 pb-0.5">
                                 <div class="flex justify-between text-gray-500 font-bold bg-gray-50 px-1 text-xxs scale-90 origin-left"><span>{{ city }}</span></div>
                                 <div class="flex flex-col text-xxs scale-90 origin-left pl-1">
@@ -150,21 +202,66 @@
 
     <script>
         const GIST_ID = "3cd74e6ce0f0041ea785c24fb7d210c9";
+
+        const legendMarginPlugin = {
+            id: 'legendMargin',
+            beforeInit(chart) {
+                const originalFit = chart.legend.fit;
+                chart.legend.fit = function fit() {
+                    originalFit.bind(chart.legend)();
+                    this.height += 25; // 增加 25px 的底部距離，將曲線圖往下推
+                };
+            }
+        };
+
         const { createApp, ref, computed, onMounted } = Vue;
 
         createApp({
             setup() {
-                const cities = ['台北', '新北', '桃園', '台中', '台南', '高雄'];
-                const globalTarget = 1600; const isLoading = ref(false); const historyData = ref({});
+                const globalTarget = 1600; const cities = ['台北', '新北', '桃園', '台中', '台南', '高雄']; const isLoading = ref(false);
                 const isCalendarExpanded = ref(true);
 
-                const base2025Bookings = {
-                    '07-01': 52, '07-02': 50, '07-03': 63, '07-04': 56, '07-05': 65, '07-06': 53, '07-07': 58,
-                    '07-08': 61, '07-09': 58, '07-10': 51, '07-11': 47, '07-12': 41, '07-13': 47, '07-14': 79,
-                    '07-15': 59, '07-16': 67, '07-17': 60, '07-18': 59, '07-19': 47, '07-20': 52, '07-21': 72,
-                    '07-22': 67, '07-23': 55, '07-24': 46, '07-25': 37, '07-26': 55, '07-27': 54, '07-28': 62,
-                    '07-29': 66, '07-30': 69, '07-31': 58
+                const selectedWeek = ref('W28');
+                const weekMap = {
+                    'W26': ['06-22', '06-23', '06-24', '06-25', '06-26', '06-27', '06-28'],
+                    'W27': ['06-29', '06-30', '07-01', '07-02', '07-03', '07-04', '07-05'],
+                    'W28': ['07-06', '07-07', '07-08', '07-09', '07-10', '07-11', '07-12'],
+                    'W29': ['07-13', '07-14', '07-15', '07-16', '07-17', '07-18', '07-19'],
+                    'W30': ['07-20', '07-21', '07-22', '07-23', '07-24', '07-25', '07-26'],
+                    'W31': ['07-27', '07-28', '07-29', '07-30', '07-31', '08-01', '08-02'],
+                    'W32': ['08-03', '08-04', '08-05', '08-06', '08-07', '08-08', '08-09'],
+                    'W33': ['08-10', '08-11', '08-12', '08-13', '08-14', '08-15', '08-16'],
+                    'W34': ['08-17', '08-18', '08-19', '08-20', '08-21', '08-22', '08-23'],
+                    'W35': ['08-24', '08-25', '08-26', '08-27', '08-28', '08-29', '08-30'],
+                    'W36': ['08-31', '09-01', '09-02', '09-03', '09-04', '09-05', '09-06'],
+                    'W37': ['09-07', '09-08', '09-09', '09-10', '09-11', '09-12', '09-13'],
+                    'W38': ['09-14', '09-15', '09-16', '09-17', '09-18', '09-19', '09-20'],
+                    'W39': ['09-21', '09-22', '09-23', '09-24', '09-25', '09-26', '09-27'],
+                    'W40': ['09-28', '09-29', '09-30', '10-01', '10-02', '10-03', '10-04'],
+                    'W41': ['10-05', '10-06', '10-07', '10-08', '10-09', '10-10', '10-11'],
+                    'W42': ['10-12', '10-13', '10-14', '10-15', '10-16', '10-17', '10-18'],
+                    'W43': ['10-19', '10-20', '10-21', '10-22', '10-23', '10-24', '10-25'],
+                    'W44': ['10-26', '10-27', '10-28', '10-29', '10-30', '10-31', '11-01'],
+                    'W45': ['11-02', '11-03', '11-04', '11-05', '11-06', '11-07', '11-08'],
+                    'W46': ['11-09', '11-10', '11-11', '11-12', '11-13', '11-14', '11-15'],
+                    'W47': ['11-16', '11-17', '11-18', '11-19', '11-20', '11-21', '11-22'],
+                    'W48': ['11-23', '11-24', '11-25', '11-26', '11-27', '11-28', '11-29'],
+                    'W49': ['11-30', '12-01', '12-02', '12-03', '12-04', '12-05', '12-06'],
+                    'W50': ['12-07', '12-08', '12-09', '12-10', '12-11', '12-12', '12-13'],
+                    'W51': ['12-14', '12-15', '12-16', '12-17', '12-18', '12-19', '12-20'],
+                    'W52': ['12-21', '12-22', '12-23', '12-24', '12-25', '12-26', '12-27'],
+                    'W53': ['12-28', '12-29', '12-30', '12-31', '01-01', '01-02', '01-03']
                 };
+
+                const selectedMonth = ref('07');
+                const daysInMonth = { '07': 31, '08': 31, '09': 30, '10': 31, '11': 30, '12': 31 };
+
+                const calendarMonth = ref('07');
+                const calendarDaysCount = computed(() => daysInMonth[calendarMonth.value] || 31);
+                const calendarLeadingBlanks = computed(() => new Date(2026, parseInt(calendarMonth.value) - 1, 1).getDay());
+                const calendarMonthLabel = computed(() => parseInt(calendarMonth.value));
+
+                const base2025Bookings = { '07-01': 52, '07-02': 50, '07-03': 63, '07-04': 56, '07-05': 65, '07-06': 53, '07-07': 58, '07-08': 61, '07-09': 58, '07-10': 51, '07-11': 47, '07-12': 41, '07-13': 47, '07-14': 79, '07-15': 59, '07-16': 67, '07-17': 60, '07-18': 59, '07-19': 47, '07-20': 52, '07-21': 72, '07-22': 67, '07-23': 55, '07-24': 46, '07-25': 37, '07-26': 55, '07-27': 54, '07-28': 62, '07-29': 66, '07-30': 69, '07-31': 58, '08-01': 81, '08-02': 65, '08-03': 84, '08-04': 83, '08-05': 88, '08-06': 110, '08-07': 91, '08-08': 104, '08-09': 76, '08-10': 61, '08-11': 73, '08-12': 83, '08-13': 61, '08-14': 81, '08-15': 88, '08-16': 59, '08-17': 63, '08-18': 68, '08-19': 64, '08-20': 65, '08-21': 53, '08-22': 47, '08-23': 64, '08-24': 59, '08-25': 82, '08-26': 50, '08-27': 64, '08-28': 51, '08-29': 35, '08-30': 56, '08-31': 57, '09-01': 49, '09-02': 59.5, '09-03': 63, '09-04': 60, '09-05': 57, '09-06': 55, '09-07': 55, '09-08': 55, '09-09': 58, '09-10': 59, '09-11': 60, '09-12': 53, '09-13': 49, '09-14': 64, '09-15': 69, '09-16': 44, '09-17': 65, '09-18': 72, '09-19': 59, '09-20': 70, '09-21': 58, '09-22': 68, '09-23': 50, '09-24': 73, '09-25': 50, '09-26': 65, '09-27': 74, '09-28': 64, '09-29': 81, '09-30': 79, '10-01': 83, '10-02': 64, '10-03': 56, '10-04': 58, '10-05': 46, '10-06': 63, '10-07': 70, '10-08': 83, '10-09': 60, '10-10': 65, '10-11': 66, '10-12': 55, '10-13': 70, '10-14': 65, '10-15': 49, '10-16': 56, '10-17': 41, '10-18': 59, '10-19': 43, '10-20': 58, '10-21': 44, '10-22': 57, '10-23': 67, '10-24': 55, '10-25': 55, '10-26': 48, '10-27': 61, '10-28': 61, '10-29': 69, '10-30': 64, '10-31': 66, '11-01': 55, '11-02': 56, '11-03': 65, '11-04': 66, '11-05': 62, '11-06': 77, '11-07': 51, '11-08': 66, '11-09': 54, '11-10': 55, '11-11': 52, '11-12': 57, '11-13': 55, '11-14': 72, '11-15': 72, '11-16': 74, '11-17': 74, '11-18': 59, '11-19': 66, '11-20': 60, '11-21': 61, '11-22': 55, '11-23': 69, '11-24': 77, '11-25': 57, '11-26': 56, '11-27': 52, '11-28': 57, '11-29': 64, '11-30': 70, '12-01': 56, '12-02': 75, '12-03': 55, '12-04': 53, '12-05': 44, '12-06': 59, '12-07': 65, '12-08': 67, '12-09': 61, '12-10': 58, '12-11': 64, '12-12': 54, '12-13': 64, '12-14': 74, '12-15': 61, '12-16': 74, '12-17': 62, '12-18': 76, '12-19': 71, '12-20': 85, '12-21': 60, '12-22': 96, '12-23': 94, '12-24': 79, '12-25': 61, '12-26': 82, '12-27': 57, '12-28': 75, '12-29': 81, '12-30': 64, '12-31': 61 };
 
                 const weather2025All = {
                     "07-01": {"台北": ["多雲", "多雲", "雷陣雨", "多雲"], "新北": ["多雲", "多雲", "雷陣雨", "多雲"], "桃園": ["多雲", "多雲", "雷陣雨", "多雲"], "台中": ["多雲", "陰天", "雷陣雨", "多雲"], "台南": ["多雲", "陰天", "雷陣雨", "多雲"], "高雄": ["多雲", "陰天", "雷陣雨", "多雲"]},
@@ -175,8 +272,163 @@
                     "07-06": {"台北": ["多雲", "陰天", "陣雨", "陣雨"], "新北": ["多雲", "陰天", "陣雨", "陣雨"], "桃園": ["多雲", "陰天", "陣雨", "陣雨"], "台中": ["陰天", "大雨", "暴雨", "大雨"], "台南": ["陰天", "大雨", "暴雨", "大雨"], "高雄": ["陰天", "大雨", "暴雨", "大雨"]},
                     "07-07": {"台北": ["多雲", "陰天", "陣雨", "陣雨"], "新北": ["多雲", "陰天", "陣雨", "陣雨"], "桃園": ["多雲", "陰天", "陣雨", "陣雨"], "台中": ["陰天", "大雨", "暴雨", "大雨"], "台南": ["陰天", "大雨", "暴雨", "大雨"], "高雄": ["陰天", "大雨", "暴雨", "大雨"]},
                     "07-08": {"台北": ["陰天", "陣雨", "陣雨", "陰天"], "新北": ["陰天", "陣雨", "陣雨", "陰天"], "桃園": ["陰天", "陣雨", "陣雨", "陰天"], "台中": ["大雨", "暴雨", "暴雨", "大雨"], "台南": ["大雨", "暴雨", "暴雨", "大雨"], "高雄": ["大雨", "暴雨", "暴雨", "大雨"]},
-                    "07-09": {"台北": ["陰天", "陣雨", "陣雨", "陰天"], "新北": ["陰天", "陣雨", "陣雨", "陰天"], "桃園": ["陰天", "陣雨", "陣雨", "陰天"], "台中": ["大雨", "暴雨", "暴雨", "大雨"], "台南": ["大雨", "暴雨", "暴雨", "大雨"], "高雄": ["大雨", "暴雨", "暴雨", "大雨"]}
+                    "07-09": {"台北": ["陰天", "陣雨", "陣雨", "陰天"], "新北": ["陰天", "陣雨", "陣雨", "陰天"], "桃園": ["陰天", "陣雨", "陣雨", "陰天"], "台中": ["大雨", "暴雨", "暴雨", "大雨"], "台南": ["大雨", "暴雨", "暴雨", "大雨"], "高雄": ["大雨", "暴雨", "暴雨", "大雨"]},
+                    "08-01": {"台北": ["陣雨", "大雨", "晴天", "陰天"], "新北": ["多雲", "陰天", "雷陣雨", "大雨"], "桃園": ["大雨", "多雲", "大雨", "大雨"], "台中": ["多雲", "晴天", "多雲", "大雨"], "台南": ["大雨", "陰天", "多雲", "晴天"], "高雄": ["陰天", "大雨", "多雲", "陣雨"]},
+                    "08-02": {"台北": ["大雨", "陣雨", "晴天", "陣雨"], "新北": ["大雨", "大雨", "大雨", "多雲"], "桃園": ["雷陣雨", "雷陣雨", "晴天", "多雲"], "台中": ["陰天", "雷陣雨", "陣雨", "晴天"], "台南": ["陣雨", "多雲", "陰天", "多雲"], "高雄": ["雷陣雨", "陣雨", "多雲", "雷陣雨"]},
+                    "08-03": {"台北": ["雷陣雨", "大雨", "多雲", "陰天"], "新北": ["陣雨", "雷陣雨", "陰天", "陣雨"], "桃園": ["陣雨", "大雨", "雷陣雨", "大雨"], "台中": ["陰天", "多雲", "多雲", "雷陣雨"], "台南": ["多雲", "雷陣雨", "大雨", "多雲"], "高雄": ["大雨", "大雨", "多雲", "晴天"]},
+                    "08-04": {"台北": ["陰天", "晴天", "陰天", "陰天"], "新北": ["雷陣雨", "晴天", "陣雨", "陰天"], "桃園": ["大雨", "雷陣雨", "陰天", "雷陣雨"], "台中": ["多雲", "大雨", "陰天", "大雨"], "台南": ["多雲", "大雨", "陰天", "多雲"], "高雄": ["陣雨", "陰天", "雷陣雨", "陰天"]},
+                    "08-05": {"台北": ["多雲", "陰天", "多雲", "陰天"], "新北": ["陣雨", "大雨", "雷陣雨", "晴天"], "桃園": ["雷陣雨", "多雲", "雷陣雨", "陰天"], "台中": ["雷陣雨", "大雨", "雷陣雨", "雷陣雨"], "台南": ["多雲", "雷陣雨", "晴天", "多雲"], "高雄": ["雷陣雨", "晴天", "大雨", "大雨"]},
+                    "08-06": {"台北": ["雷陣雨", "陣雨", "大雨", "大雨"], "新北": ["晴天", "陰天", "多雲", "雷陣雨"], "桃園": ["陰天", "多雲", "雷陣雨", "雷陣雨"], "台中": ["陰天", "大雨", "大雨", "多雲"], "台南": ["陰天", "晴天", "晴天", "雷陣雨"], "高雄": ["雷陣雨", "大雨", "雷陣雨", "陣雨"]},
+                    "08-07": {"台北": ["陣雨", "雷陣雨", "雷陣雨", "陰天"], "新北": ["雷陣雨", "多雲", "陣雨", "多雲"], "桃園": ["陰天", "陣雨", "晴天", "陣雨"], "台中": ["陰天", "多雲", "雷陣雨", "晴天"], "台南": ["雷陣雨", "陣雨", "晴天", "陣雨"], "高雄": ["雷陣雨", "雷陣雨", "大雨", "多雲"]},
+                    "08-08": {"台北": ["晴天", "晴天", "陰天", "陣雨"], "新北": ["多雲", "晴天", "多雲", "晴天"], "桃園": ["雷陣雨", "陣雨", "晴天", "陣雨"], "台中": ["陰天", "大雨", "陣雨", "晴天"], "台南": ["雷陣雨", "陰天", "雷陣雨", "大雨"], "高雄": ["雷陣雨", "雷陣雨", "多雲", "多雲"]},
+                    "08-09": {"台北": ["大雨", "陰天", "多雲", "多雲"], "新北": ["晴天", "大雨", "大雨", "晴天"], "桃園": ["雷陣雨", "雷陣雨", "大雨", "雷陣雨"], "台中": ["陰天", "陣雨", "大雨", "大雨"], "台南": ["大雨", "雷陣雨", "多雲", "雷陣雨"], "高雄": ["多雲", "晴天", "陣雨", "陣雨"]},
+                    "08-10": {"台北": ["多雲", "雷陣雨", "多雲", "多雲"], "新北": ["陣雨", "大雨", "晴天", "雷陣雨"], "桃園": ["陰天", "大雨", "多雲", "陰天"], "台中": ["晴天", "陰天", "陣雨", "晴天"], "台南": ["大雨", "陣雨", "多雲", "晴天"], "高雄": ["多雲", "大雨", "陣雨", "大雨"]},
+                    "08-11": {"台北": ["雷陣雨", "大雨", "晴天", "雷陣雨"], "新北": ["陰天", "陰天", "多雲", "大雨"], "桃園": ["晴天", "雷陣雨", "晴天", "多雲"], "台中": ["晴天", "大雨", "雷陣雨", "雷陣雨"], "台南": ["雷陣雨", "雷陣雨", "陣雨", "陰天"], "高雄": ["陣雨", "晴天", "多雲", "多雲"]},
+                    "08-12": {"台北": ["陰天", "陰天", "陣雨", "雷陣雨"], "新北": ["晴天", "大雨", "大雨", "多雲"], "桃園": ["陣雨", "雷陣雨", "晴天", "雷陣雨"], "台中": ["多雲", "大雨", "陰天", "陣雨"], "台南": ["晴天", "陰天", "大雨", "陰天"], "高雄": ["多雲", "陣雨", "陣雨", "大雨"]},
+                    "08-13": {"台北": ["雷陣雨", "大雨", "雷陣雨", "雷陣雨"], "新北": ["陣雨", "多雲", "晴天", "陰天"], "桃園": ["陰天", "陣雨", "大雨", "雷陣雨"], "台中": ["陣雨", "陰天", "雷陣雨", "晴天"], "台南": ["大雨", "大雨", "陣雨", "陰天"], "高雄": ["雷陣雨", "多雲", "多雲", "陣雨"]},
+                    "08-14": {"台北": ["大雨", "雷陣雨", "陣雨", "晴天"], "新北": ["晴天", "晴天", "陰天", "陰天"], "桃園": ["雷陣雨", "陰天", "大雨", "陣雨"], "台中": ["陰天", "晴天", "陰天", "晴天"], "台南": ["多雲", "晴天", "雷陣雨", "陰天"], "高雄": ["雷陣雨", "多雲", "陣雨", "晴天"]},
+                    "08-15": {"台北": ["大雨", "陰天", "陰天", "陰天"], "新北": ["雷陣雨", "雷陣雨", "大雨", "雷陣雨"], "桃園": ["陰天", "雷陣雨", "陰天", "雷陣雨"], "台中": ["陣雨", "陰天", "陣雨", "晴天"], "台南": ["陰天", "雷陣雨", "多雲", "陣雨"], "高雄": ["大雨", "陣雨", "陰天", "大雨"]},
+                    "08-16": {"台北": ["晴天", "多雲", "陣雨", "陣雨"], "新北": ["陣雨", "大雨", "大雨", "陣雨"], "桃園": ["雷陣雨", "多雲", "大雨", "陰天"], "台中": ["大雨", "大雨", "雷陣雨", "晴天"], "台南": ["陰天", "大雨", "晴天", "多雲"], "高雄": ["大雨", "陰天", "多雲", "大雨"]},
+                    "08-17": {"台北": ["陰天", "晴天", "大雨", "多雲"], "新北": ["陣雨", "晴天", "陰天", "雷陣雨"], "桃園": ["大雨", "陣雨", "陰天", "晴天"], "台中": ["晴天", "大雨", "大雨", "大雨"], "台南": ["多雲", "多雲", "雷陣雨", "陰天"], "高雄": ["大雨", "陰天", "多雲", "大雨"]},
+                    "08-18": {"台北": ["大雨", "晴天", "大雨", "多雲"], "新北": ["多雲", "晴天", "陣雨", "陰天"], "桃園": ["雷陣雨", "陣雨", "晴天", "多雲"], "台中": ["陰天", "多雲", "陣雨", "雷陣雨"], "台南": ["大雨", "大雨", "雷陣雨", "大雨"], "高雄": ["多雲", "陣雨", "雷陣雨", "多雲"]},
+                    "08-19": {"台北": ["陣雨", "大雨", "雷陣雨", "大雨"], "新北": ["大雨", "陣雨", "雷陣雨", "陰天"], "桃園": ["晴天", "晴天", "大雨", "晴天"], "台中": ["多雲", "晴天", "大雨", "陰天"], "台南": ["晴天", "晴天", "多雲", "晴天"], "高雄": ["陰天", "晴天", "大雨", "陰天"]},
+                    "08-20": {"台北": ["陰天", "陰天", "晴天", "陰天"], "新北": ["陰天", "大雨", "大雨", "陣雨"], "桃園": ["雷陣雨", "多雲", "晴天", "雷陣雨"], "台中": ["晴天", "晴天", "大雨", "陣雨"], "台南": ["陣雨", "陰天", "晴天", "陣雨"], "高雄": ["大雨", "多雲", "晴天", "雷陣雨"]},
+                    "08-21": {"台北": ["大雨", "多雲", "晴天", "陣雨"], "新北": ["陣雨", "雷陣雨", "雷陣雨", "雷陣雨"], "桃園": ["大雨", "陰天", "雷陣雨", "陰天"], "台中": ["雷陣雨", "陣雨", "大雨", "多雲"], "台南": ["大雨", "陣雨", "晴天", "陣雨"], "高雄": ["陣雨", "雷陣雨", "多雲", "雷陣雨"]},
+                    "08-22": {"台北": ["陰天", "陣雨", "雷陣雨", "晴天"], "新北": ["陣雨", "晴天", "晴天", "陰天"], "桃園": ["晴天", "大雨", "陣雨", "雷陣雨"], "台中": ["晴天", "陰天", "陰天", "晴天"], "台南": ["多雲", "陣雨", "多雲", "陣雨"], "高雄": ["陰天", "陣雨", "陰天", "雷陣雨"]},
+                    "08-23": {"台北": ["大雨", "陣雨", "多雲", "多雲"], "新北": ["雷陣雨", "多雲", "晴天", "多雲"], "桃園": ["陣雨", "陰天", "晴天", "晴天"], "台中": ["多雲", "晴天", "雷陣雨", "多雲"], "台南": ["晴天", "陣雨", "晴天", "大雨"], "高雄": ["多雲", "陣雨", "多雲", "陣雨"]},
+                    "08-24": {"台北": ["晴天", "陰天", "雷陣雨", "晴天"], "新北": ["大雨", "陰天", "多雲", "陰天"], "桃園": ["晴天", "陣雨", "大雨", "晴天"], "台中": ["陰天", "陣雨", "雷陣雨", "陰天"], "台南": ["雷陣雨", "大雨", "多雲", "陰天"], "高雄": ["晴天", "陣雨", "雷陣雨", "陣雨"]},
+                    "08-25": {"台北": ["晴天", "多雲", "晴天", "大雨"], "新北": ["多雲", "多雲", "大雨", "陰天"], "桃園": ["陣雨", "晴天", "大雨", "陣雨"], "台中": ["陰天", "雷陣雨", "大雨", "大雨"], "台南": ["晴天", "陣雨", "大雨", "陰天"], "高雄": ["陣雨", "多雲", "陰天", "多雲"]},
+                    "08-26": {"台北": ["陰天", "多雲", "大雨", "大雨"], "新北": ["大雨", "晴天", "雷陣雨", "晴天"], "桃園": ["陣雨", "陣雨", "陰天", "陰天"], "台中": ["大雨", "陣雨", "雷陣雨", "陣雨"], "台南": ["多雲", "晴天", "陰天", "大雨"], "高雄": ["晴天", "晴天", "陣雨", "多雲"]},
+                    "08-27": {"台北": ["大雨", "多雲", "陣雨", "晴天"], "新北": ["陰天", "陰天", "晴天", "大雨"], "桃園": ["雷陣雨", "陰天", "多雲", "大雨"], "台中": ["陰天", "陰天", "陰天", "大雨"], "台南": ["大雨", "多雲", "陰天", "多雲"], "高雄": ["雷陣雨", "多雲", "雷陣雨", "陣雨"]},
+                    "08-28": {"台北": ["晴天", "晴天", "多雲", "晴天"], "新北": ["大雨", "陣雨", "陣雨", "多雲"], "桃園": ["陣雨", "雷陣雨", "晴天", "晴天"], "台中": ["大雨", "陰天", "大雨", "大雨"], "台南": ["雷陣雨", "陣雨", "晴天", "晴天"], "高雄": ["雷陣雨", "晴天", "陣雨", "大雨"]},
+                    "08-29": {"台北": ["多雲", "陰天", "雷陣雨", "多雲"], "新北": ["多雲", "大雨", "大雨", "大雨"], "桃園": ["陣雨", "陣雨", "陰天", "大雨"], "台中": ["雷陣雨", "多雲", "雷陣雨", "大雨"], "台南": ["多雲", "陣雨", "陰天", "晴天"], "高雄": ["晴天", "雷陣雨", "晴天", "陰天"]},
+                    "08-30": {"台北": ["陰天", "多雲", "陣雨", "多雲"], "新北": ["大雨", "晴天", "多雲", "雷陣雨"], "桃園": ["大雨", "陣雨", "大雨", "雷陣雨"], "台中": ["陰天", "大雨", "多雲", "陰天"], "台南": ["陰天", "多雲", "陣雨", "晴天"], "高雄": ["多雲", "雷陣雨", "陰天", "雷陣雨"]},
+                    "08-31": {"台北": ["多雲", "晴天", "陰天", "大雨"], "新北": ["陰天", "多雲", "雷陣雨", "多雲"], "桃園": ["陣雨", "陰天", "多雲", "多雲"], "台中": ["晴天", "大雨", "大雨", "雷陣雨"], "台南": ["大雨", "大雨", "陣雨", "陣雨"], "高雄": ["晴天", "雷陣雨", "陣雨", "晴天"]},
+                    "09-01": {"台北": ["陣雨", "大雨", "多雲", "多雲"], "新北": ["多雲", "大雨", "晴天", "陣雨"], "桃園": ["晴天", "雷陣雨", "陰天", "陣雨"], "台中": ["陰天", "晴天", "多雲", "大雨"], "台南": ["晴天", "晴天", "多雲", "晴天"], "高雄": ["多雲", "多雲", "雷陣雨", "多雲"]},
+                    "09-02": {"台北": ["陰天", "陰天", "雷陣雨", "雷陣雨"], "新北": ["多雲", "陣雨", "雷陣雨", "晴天"], "桃園": ["大雨", "晴天", "雷陣雨", "晴天"], "台中": ["大雨", "大雨", "陣雨", "大雨"], "台南": ["大雨", "陣雨", "陣雨", "陣雨"], "高雄": ["陰天", "大雨", "雷陣雨", "多雲"]},
+                    "09-03": {"台北": ["晴天", "陣雨", "多雲", "晴天"], "新北": ["大雨", "大雨", "晴天", "晴天"], "桃園": ["大雨", "大雨", "雷陣雨", "陣雨"], "台中": ["多雲", "陣雨", "陰天", "陣雨"], "台南": ["晴天", "陰天", "大雨", "陰天"], "高雄": ["多雲", "多雲", "陣雨", "多雲"]},
+                    "09-04": {"台北": ["多雲", "大雨", "大雨", "陣雨"], "新北": ["雷陣雨", "大雨", "雷陣雨", "陣雨"], "桃園": ["陣雨", "陰天", "大雨", "陰天"], "台中": ["陣雨", "晴天", "陣雨", "大雨"], "台南": ["陰天", "陰天", "陰天", "陰天"], "高雄": ["大雨", "陰天", "陰天", "雷陣雨"]},
+                    "09-05": {"台北": ["雷陣雨", "雷陣雨", "陰天", "晴天"], "新北": ["陰天", "陰天", "陣雨", "多雲"], "桃園": ["陰天", "雷陣雨", "大雨", "大雨"], "台中": ["陣雨", "陣雨", "陣雨", "陰天"], "台南": ["多雲", "陰天", "大雨", "陣雨"], "高雄": ["陣雨", "多雲", "晴天", "多雲"]},
+                    "09-06": {"台北": ["晴天", "陣雨", "雷陣雨", "陣雨"], "新北": ["大雨", "陰天", "陰天", "多雲"], "桃園": ["多雲", "多雲", "多雲", "陰天"], "台中": ["陰天", "多雲", "雷陣雨", "陰天"], "台南": ["多雲", "晴天", "陰天", "雷陣雨"], "高雄": ["陰天", "大雨", "多雲", "陣雨"]},
+                    "09-07": {"台北": ["陰天", "多雲", "多雲", "陣雨"], "新北": ["多雲", "多雲", "大雨", "晴天"], "桃園": ["晴天", "陰天", "陰天", "陰天"], "台中": ["雷陣雨", "大雨", "多雲", "大雨"], "台南": ["陰天", "晴天", "大雨", "晴天"], "高雄": ["陣雨", "晴天", "晴天", "晴天"]},
+                    "09-08": {"台北": ["晴天", "多雲", "雷陣雨", "大雨"], "新北": ["雷陣雨", "多雲", "陣雨", "大雨"], "桃園": ["晴天", "晴天", "雷陣雨", "大雨"], "台中": ["大雨", "晴天", "晴天", "陰天"], "台南": ["陰天", "雷陣雨", "晴天", "陣雨"], "高雄": ["大雨", "晴天", "多雲", "雷陣雨"]},
+                    "09-09": {"台北": ["雷陣雨", "大雨", "晴天", "晴天"], "新北": ["陰天", "雷陣雨", "陣雨", "晴天"], "桃園": ["晴天", "多雲", "晴天", "多雲"], "台中": ["多雲", "陣雨", "大雨", "多雲"], "台南": ["陰天", "大雨", "陰天", "晴天"], "高雄": ["陰天", "雷陣雨", "晴天", "陣雨"]},
+                    "09-10": {"台北": ["雷陣雨", "陣雨", "陣雨", "陣雨"], "新北": ["晴天", "大雨", "雷陣雨", "陣雨"], "桃園": ["雷陣雨", "陰天", "多雲", "陣雨"], "台中": ["陰天", "多雲", "陣雨", "大雨"], "台南": ["雷陣雨", "雷陣雨", "晴天", "陰天"], "高雄": ["晴天", "大雨", "陣雨", "陣雨"]},
+                    "09-11": {"台北": ["多雲", "晴天", "多雲", "大雨"], "新北": ["陰天", "雷陣雨", "晴天", "陣雨"], "桃園": ["晴天", "大雨", "陰天", "晴天"], "台中": ["陣雨", "晴天", "雷陣雨", "多雲"], "台南": ["陰天", "雷陣雨", "雷陣雨", "雷陣雨"], "高雄": ["陣雨", "陰天", "多雲", "晴天"]},
+                    "09-12": {"台北": ["陣雨", "晴天", "陰天", "雷陣雨"], "新北": ["大雨", "雷陣雨", "陣雨", "雷陣雨"], "桃園": ["多雲", "大雨", "陣雨", "陰天"], "台中": ["晴天", "陰天", "晴天", "晴天"], "台南": ["晴天", "陰天", "陰天", "雷陣雨"], "高雄": ["雷陣雨", "多雲", "多雲", "多雲"]},
+                    "09-13": {"台北": ["晴天", "陰天", "陣雨", "多雲"], "新北": ["晴天", "大雨", "陣雨", "多雲"], "桃園": ["陰天", "雷陣雨", "雷陣雨", "大雨"], "台中": ["晴天", "陣雨", "陰天", "大雨"], "台南": ["晴天", "多雲", "多雲", "晴天"], "高雄": ["多雲", "多雲", "多雲", "大雨"]},
+                    "09-14": {"台北": ["大雨", "雷陣雨", "陣雨", "陰天"], "新北": ["大雨", "晴天", "大雨", "陰天"], "桃園": ["多雲", "大雨", "晴天", "陣雨"], "台中": ["陣雨", "大雨", "陣雨", "多雲"], "台南": ["多雲", "陰天", "大雨", "大雨"], "高雄": ["多雲", "大雨", "雷陣雨", "陰天"]},
+                    "09-15": {"台北": ["陣雨", "陣雨", "多雲", "雷陣雨"], "新北": ["晴天", "大雨", "大雨", "雷陣雨"], "桃園": ["陣雨", "陰天", "陣雨", "雷陣雨"], "台中": ["陰天", "陣雨", "晴天", "陰天"], "台南": ["陣雨", "陰天", "陰天", "晴天"], "高雄": ["晴天", "雷陣雨", "晴天", "陰天"]},
+                    "09-16": {"台北": ["陣雨", "多雲", "多雲", "多雲"], "新北": ["晴天", "多雲", "晴天", "多雲"], "桃園": ["陰天", "多雲", "雷陣雨", "陣雨"], "台中": ["晴天", "雷陣雨", "陰天", "陣雨"], "台南": ["多雲", "多雲", "陰天", "陣雨"], "高雄": ["陣雨", "大雨", "大雨", "雷陣雨"]},
+                    "09-17": {"台北": ["雷陣雨", "雷陣雨", "大雨", "大雨"], "新北": ["陣雨", "晴天", "晴天", "雷陣雨"], "桃園": ["陣雨", "多雲", "晴天", "雷陣雨"], "台中": ["陣雨", "陣雨", "陰天", "晴天"], "台南": ["晴天", "陣雨", "大雨", "雷陣雨"], "高雄": ["陰天", "大雨", "多雲", "陣雨"]},
+                    "09-18": {"台北": ["陣雨", "陣雨", "陣雨", "陣雨"], "新北": ["晴天", "雷陣雨", "陣雨", "多雲"], "桃園": ["陰天", "陣雨", "陰天", "晴天"], "台中": ["陰天", "大雨", "多雲", "陣雨"], "台南": ["陣雨", "大雨", "陰天", "陰天"], "高雄": ["陣雨", "多雲", "大雨", "陰天"]},
+                    "09-19": {"台北": ["陣雨", "晴天", "大雨", "雷陣雨"], "新北": ["大雨", "晴天", "多雲", "晴天"], "桃園": ["陣雨", "大雨", "多雲", "多雲"], "台中": ["陣雨", "陣雨", "大雨", "陰天"], "台南": ["大雨", "大雨", "大雨", "晴天"], "高雄": ["多雲", "雷陣雨", "多雲", "雷陣雨"]},
+                    "09-20": {"台北": ["雷陣雨", "多雲", "陣雨", "多雲"], "新北": ["晴天", "晴天", "雷陣雨", "陣雨"], "桃園": ["陰天", "多雲", "大雨", "陰天"], "台中": ["大雨", "多雲", "大雨", "大雨"], "台南": ["陰天", "晴天", "陰天", "晴天"], "高雄": ["雷陣雨", "多雲", "陰天", "雷陣雨"]},
+                    "09-21": {"台北": ["陣雨", "多雲", "陰天", "多雲"], "新北": ["陣雨", "大雨", "大雨", "晴天"], "桃園": ["雷陣雨", "大雨", "多雲", "大雨"], "台中": ["陣雨", "陣雨", "多雲", "陣雨"], "台南": ["晴天", "晴天", "多雲", "陰天"], "高雄": ["多雲", "陰天", "晴天", "多雲"]},
+                    "09-22": {"台北": ["大雨", "陣雨", "多雲", "陣雨"], "新北": ["雷陣雨", "陰天", "陰天", "陣雨"], "桃園": ["晴天", "大雨", "晴天", "陣雨"], "台中": ["陣雨", "陣雨", "雷陣雨", "多雲"], "台南": ["晴天", "多雲", "陣雨", "大雨"], "高雄": ["陣雨", "雷陣雨", "多雲", "大雨"]},
+                    "09-23": {"台北": ["晴天", "大雨", "雷陣雨", "雷陣雨"], "新北": ["多雲", "雷陣雨", "雷陣雨", "晴天"], "桃園": ["多雲", "大雨", "陰天", "雷陣雨"], "台中": ["陰天", "晴天", "多雲", "晴天"], "台南": ["晴天", "陰天", "雷陣雨", "陣雨"], "高雄": ["多雲", "陣雨", "多雲", "多雲"]},
+                    "09-24": {"台北": ["多雲", "大雨", "多雲", "陰天"], "新北": ["多雲", "晴天", "晴天", "晴天"], "桃園": ["雷陣雨", "晴天", "大雨", "多雲"], "台中": ["晴天", "晴天", "晴天", "多雲"], "台南": ["陣雨", "多雲", "陣雨", "大雨"], "高雄": ["大雨", "晴天", "晴天", "陰天"]},
+                    "09-25": {"台北": ["晴天", "大雨", "陣雨", "大雨"], "新北": ["晴天", "晴天", "陰天", "陣雨"], "桃園": ["晴天", "大雨", "陣雨", "陣雨"], "台中": ["雷陣雨", "多雲", "大雨", "陣雨"], "台南": ["雷陣雨", "多雲", "陰天", "多雲"], "高雄": ["大雨", "雷陣雨", "晴天", "晴天"]},
+                    "09-26": {"台北": ["陣雨", "陰天", "晴天", "陣雨"], "新北": ["大雨", "陰天", "陣雨", "多雲"], "桃園": ["多雲", "陣雨", "陰天", "陰天"], "台中": ["陰天", "多雲", "陣雨", "雷陣雨"], "台南": ["雷陣雨", "雷陣雨", "陣雨", "雷陣雨"], "高雄": ["晴天", "大雨", "雷陣雨", "大雨"]},
+                    "09-27": {"台北": ["陣雨", "陣雨", "大雨", "多雲"], "新北": ["多雲", "陰天", "晴天", "大雨"], "桃園": ["雷陣雨", "陣雨", "大雨", "多雲"], "台中": ["多雲", "陰天", "陰天", "陣雨"], "台南": ["晴天", "陰天", "晴天", "陣雨"], "高雄": ["多雲", "多雲", "陣雨", "雷陣雨"]},
+                    "09-28": {"台北": ["雷陣雨", "晴天", "陰天", "多雲"], "新北": ["陰天", "多雲", "多雲", "雷陣雨"], "桃園": ["雷陣雨", "多雲", "大雨", "陣雨"], "台中": ["陣雨", "大雨", "陰天", "多雲"], "台南": ["大雨", "陰天", "多雲", "晴天"], "高雄": ["陰天", "陣雨", "晴天", "陣雨"]},
+                    "09-29": {"台北": ["陰天", "雷陣雨", "陰天", "大雨"], "新北": ["大雨", "大雨", "多雲", "陣雨"], "桃園": ["陣雨", "陰天", "多雲", "大雨"], "台中": ["多雲", "多雲", "雷陣雨", "陣雨"], "台南": ["陣雨", "晴天", "大雨", "陣雨"], "高雄": ["陰天", "晴天", "陰天", "陰天"]},
+                    "09-30": {"台北": ["晴天", "陰天", "晴天", "晴天"], "新北": ["晴天", "多雲", "陰天", "陣雨"], "桃園": ["雷陣雨", "陰天", "陣雨", "晴天"], "台中": ["晴天", "雷陣雨", "晴天", "大雨"], "台南": ["大雨", "陣雨", "大雨", "晴天"], "高雄": ["晴天", "大雨", "多雲", "陰天"]},
+                    "10-01": {"台北": ["晴天", "多雲", "陣雨", "晴天"], "新北": ["雷陣雨", "陣雨", "陣雨", "陰天"], "桃園": ["雷陣雨", "陰天", "陰天", "大雨"], "台中": ["多雲", "多雲", "多雲", "陣雨"], "台南": ["大雨", "雷陣雨", "陰天", "大雨"], "高雄": ["多雲", "陣雨", "陰天", "晴天"]},
+                    "10-02": {"台北": ["雷陣雨", "大雨", "晴天", "晴天"], "新北": ["晴天", "陰天", "雷陣雨", "陣雨"], "桃園": ["陣雨", "大雨", "陣雨", "雷陣雨"], "台中": ["晴天", "晴天", "陰天", "多雲"], "台南": ["雷陣雨", "多雲", "多雲", "多雲"], "高雄": ["大雨", "雷陣雨", "大雨", "陰天"]},
+                    "10-03": {"台北": ["陰天", "陰天", "多雲", "陰天"], "新北": ["陣雨", "雷陣雨", "雷陣雨", "陣雨"], "桃園": ["多雲", "多雲", "陣雨", "大雨"], "台中": ["多雲", "晴天", "雷陣雨", "陣雨"], "台南": ["晴天", "陣雨", "陰天", "晴天"], "高雄": ["陣雨", "大雨", "晴天", "雷陣雨"]},
+                    "10-04": {"台北": ["多雲", "雷陣雨", "晴天", "陣雨"], "新北": ["晴天", "雷陣雨", "陣雨", "雷陣雨"], "桃園": ["雷陣雨", "晴天", "大雨", "陣雨"], "台中": ["大雨", "陣雨", "大雨", "陰天"], "台南": ["多雲", "大雨", "陣雨", "陣雨"], "高雄": ["雷陣雨", "晴天", "晴天", "雷陣雨"]},
+                    "10-05": {"台北": ["陰天", "多雲", "大雨", "雷陣雨"], "新北": ["雷陣雨", "雷陣雨", "晴天", "雷陣雨"], "桃園": ["陰天", "晴天", "晴天", "多雲"], "台中": ["陰天", "晴天", "陰天", "多雲"], "台南": ["晴天", "晴天", "大雨", "多雲"], "高雄": ["雷陣雨", "多雲", "晴天", "陣雨"]},
+                    "10-06": {"台北": ["陣雨", "晴天", "晴天", "晴天"], "新北": ["多雲", "大雨", "陰天", "大雨"], "桃園": ["陰天", "陣雨", "多雲", "陣雨"], "台中": ["大雨", "陰天", "陰天", "多雲"], "台南": ["晴天", "陣雨", "雷陣雨", "陰天"], "高雄": ["陰天", "雷陣雨", "雷陣雨", "雷陣雨"]},
+                    "10-07": {"台北": ["晴天", "陰天", "陣雨", "雷陣雨"], "新北": ["多雲", "晴天", "陣雨", "大雨"], "桃園": ["多雲", "多雲", "多雲", "大雨"], "台中": ["大雨", "大雨", "雷陣雨", "多雲"], "台南": ["晴天", "晴天", "多雲", "晴天"], "高雄": ["晴天", "陣雨", "晴天", "晴天"]},
+                    "10-08": {"台北": ["雷陣雨", "陣雨", "陰天", "陰天"], "新北": ["雷陣雨", "雷陣雨", "晴天", "晴天"], "桃園": ["晴天", "陣雨", "陰天", "雷陣雨"], "台中": ["大雨", "陰天", "多雲", "陣雨"], "台南": ["多雲", "陰天", "晴天", "多雲"], "高雄": ["多雲", "陣雨", "晴天", "雷陣雨"]},
+                    "10-09": {"台北": ["晴天", "陰天", "多雲", "陣雨"], "新北": ["陰天", "晴天", "陣雨", "雷陣雨"], "桃園": ["大雨", "陣雨", "雷陣雨", "陣雨"], "台中": ["雷陣雨", "陣雨", "多雲", "陣雨"], "台南": ["雷陣雨", "陰天", "陣雨", "陰天"], "高雄": ["大雨", "陰天", "晴天", "陰天"]},
+                    "10-10": {"台北": ["大雨", "晴天", "陰天", "多雲"], "新北": ["多雲", "晴天", "大雨", "陰天"], "桃園": ["陣雨", "陰天", "陰天", "大雨"], "台中": ["晴天", "陣雨", "晴天", "雷陣雨"], "台南": ["雷陣雨", "陰天", "雷陣雨", "晴天"], "高雄": ["晴天", "陰天", "多雲", "陣雨"]},
+                    "10-11": {"台北": ["雷陣雨", "大雨", "陰天", "多雲"], "新北": ["陣雨", "雷陣雨", "多雲", "雷陣雨"], "桃園": ["大雨", "大雨", "陣雨", "陣雨"], "台中": ["大雨", "大雨", "晴天", "大雨"], "台南": ["多雲", "大雨", "陣雨", "陰天"], "高雄": ["晴天", "雷陣雨", "多雲", "晴天"]},
+                    "10-12": {"台北": ["大雨", "陰天", "陣雨", "陰天"], "新北": ["陣雨", "多雲", "雷陣雨", "大雨"], "桃園": ["陰天", "陰天", "雷陣雨", "大雨"], "台中": ["晴天", "晴天", "大雨", "陰天"], "台南": ["晴天", "晴天", "陰天", "大雨"], "高雄": ["多雲", "陰天", "多雲", "陰天"]},
+                    "10-13": {"台北": ["大雨", "雷陣雨", "陣雨", "陣雨"], "新北": ["陰天", "大雨", "多雲", "雷陣雨"], "桃園": ["陰天", "陰天", "多雲", "多雲"], "台中": ["陰天", "雷陣雨", "雷陣雨", "陣雨"], "台南": ["大雨", "多雲", "陣雨", "陰天"], "高雄": ["雷陣雨", "陣雨", "晴天", "大雨"]},
+                    "10-14": {"台北": ["大雨", "雷陣雨", "陰天", "晴天"], "新北": ["雷陣雨", "晴天", "雷陣雨", "晴天"], "桃園": ["多雲", "多雲", "雷陣雨", "多雲"], "台中": ["雷陣雨", "大雨", "多雲", "雷陣雨"], "台南": ["大雨", "大雨", "雷陣雨", "大雨"], "高雄": ["多雲", "晴天", "多雲", "多雲"]},
+                    "10-15": {"台北": ["陰天", "晴天", "晴天", "晴天"], "新北": ["雷陣雨", "雷陣雨", "陰天", "陣雨"], "桃園": ["陰天", "陣雨", "大雨", "雷陣雨"], "台中": ["雷陣雨", "大雨", "大雨", "多雲"], "台南": ["陰天", "晴天", "大雨", "多雲"], "高雄": ["多雲", "晴天", "陣雨", "陣雨"]},
+                    "10-16": {"台北": ["多雲", "雷陣雨", "大雨", "雷陣雨"], "新北": ["陰天", "晴天", "大雨", "晴天"], "桃園": ["陰天", "陣雨", "多雲", "多雲"], "台中": ["晴天", "陣雨", "陣雨", "多雲"], "台南": ["雷陣雨", "陣雨", "多雲", "陣雨"], "高雄": ["雷陣雨", "雷陣雨", "雷陣雨", "陣雨"]},
+                    "10-17": {"台北": ["陰天", "陣雨", "多雲", "陣雨"], "新北": ["大雨", "晴天", "陣雨", "大雨"], "桃園": ["陰天", "陰天", "陰天", "陣雨"], "台中": ["大雨", "晴天", "多雲", "晴天"], "台南": ["陰天", "雷陣雨", "陣雨", "晴天"], "高雄": ["晴天", "陣雨", "晴天", "雷陣雨"]},
+                    "10-18": {"台北": ["大雨", "陰天", "晴天", "陰天"], "新北": ["大雨", "雷陣雨", "多雲", "多雲"], "桃園": ["大雨", "雷陣雨", "晴天", "陰天"], "台中": ["陣雨", "雷陣雨", "陣雨", "雷陣雨"], "台南": ["陰天", "晴天", "陰天", "多雲"], "高雄": ["陣雨", "雷陣雨", "晴天", "多雲"]},
+                    "10-19": {"台北": ["陰天", "雷陣雨", "雷陣雨", "大雨"], "新北": ["晴天", "陣雨", "雷陣雨", "晴天"], "桃園": ["陣雨", "晴天", "晴天", "大雨"], "台中": ["雷陣雨", "大雨", "陣雨", "晴天"], "台南": ["大雨", "晴天", "雷陣雨", "大雨"], "高雄": ["陰天", "陰天", "大雨", "大雨"]},
+                    "10-20": {"台北": ["陣雨", "陰天", "晴天", "大雨"], "新北": ["雷陣雨", "陣雨", "雷陣雨", "晴天"], "桃園": ["陰天", "多雲", "多雲", "多雲"], "台中": ["多雲", "多雲", "陣雨", "陰天"], "台南": ["陣雨", "陰天", "大雨", "陰天"], "高雄": ["雷陣雨", "晴天", "陰天", "陰天"]},
+                    "10-21": {"台北": ["多雲", "雷陣雨", "多雲", "晴天"], "新北": ["晴天", "陰天", "陰天", "陣雨"], "桃園": ["晴天", "晴天", "晴天", "多雲"], "台中": ["雷陣雨", "陰天", "雷陣雨", "陣雨"], "台南": ["多雲", "大雨", "大雨", "雷陣雨"], "高雄": ["晴天", "陣雨", "大雨", "多雲"]},
+                    "10-22": {"台北": ["雷陣雨", "陰天", "大雨", "雷陣雨"], "新北": ["雷陣雨", "雷陣雨", "陰天", "大雨"], "桃園": ["陰天", "晴天", "陰天", "雷陣雨"], "台中": ["晴天", "大雨", "陰天", "雷陣雨"], "台南": ["陣雨", "晴天", "陰天", "大雨"], "高雄": ["晴天", "陣雨", "多雲", "陣雨"]},
+                    "10-23": {"台北": ["晴天", "陣雨", "大雨", "陣雨"], "新北": ["陣雨", "大雨", "多雲", "雷陣雨"], "桃園": ["陣雨", "多雲", "陰天", "雷陣雨"], "台中": ["雷陣雨", "陰天", "雷陣雨", "晴天"], "台南": ["晴天", "多雲", "大雨", "多雲"], "高雄": ["陣雨", "雷陣雨", "晴天", "陣雨"]},
+                    "10-24": {"台北": ["多雲", "晴天", "晴天", "雷陣雨"], "新北": ["多雲", "多雲", "雷陣雨", "陣雨"], "桃園": ["陰天", "多雲", "大雨", "大雨"], "台中": ["多雲", "陣雨", "晴天", "陣雨"], "台南": ["多雲", "大雨", "雷陣雨", "大雨"], "高雄": ["晴天", "陰天", "陣雨", "晴天"]},
+                    "10-25": {"台北": ["大雨", "陣雨", "多雲", "大雨"], "新北": ["大雨", "陣雨", "大雨", "陰天"], "桃園": ["晴天", "大雨", "多雲", "多雲"], "台中": ["陣雨", "陣雨", "晴天", "陰天"], "台南": ["陣雨", "晴天", "大雨", "雷陣雨"], "高雄": ["雷陣雨", "雷陣雨", "晴天", "雷陣雨"]},
+                    "10-26": {"台北": ["雷陣雨", "雷陣雨", "陰天", "雷陣雨"], "新北": ["雷陣雨", "陣雨", "晴天", "多雲"], "桃園": ["陰天", "陣雨", "大雨", "陣雨"], "台中": ["陰天", "晴天", "雷陣雨", "雷陣雨"], "台南": ["雷陣雨", "大雨", "陣雨", "陰天"], "高雄": ["多雲", "多雲", "晴天", "陰天"]},
+                    "10-27": {"台北": ["晴天", "陣雨", "陰天", "晴天"], "新北": ["雷陣雨", "陰天", "雷陣雨", "晴天"], "桃園": ["陣雨", "多雲", "雷陣雨", "陰天"], "台中": ["大雨", "陰天", "晴天", "晴天"], "台南": ["晴天", "雷陣雨", "雷陣雨", "雷陣雨"], "高雄": ["晴天", "陣雨", "陰天", "大雨"]},
+                    "10-28": {"台北": ["陰天", "雷陣雨", "大雨", "陣雨"], "新北": ["晴天", "陣雨", "陣雨", "陰天"], "桃園": ["陰天", "多雲", "大雨", "多雲"], "台中": ["晴天", "晴天", "雷陣雨", "晴天"], "台南": ["雷陣雨", "陰天", "大雨", "多雲"], "高雄": ["陣雨", "雷陣雨", "陰天", "多雲"]},
+                    "10-29": {"台北": ["陣雨", "晴天", "大雨", "陣雨"], "新北": ["大雨", "陰天", "陣雨", "陰天"], "桃園": ["陣雨", "晴天", "陰天", "大雨"], "台中": ["大雨", "陰天", "多雲", "陣雨"], "台南": ["大雨", "陣雨", "多雲", "大雨"], "高雄": ["大雨", "大雨", "多雲", "晴天"]},
+                    "10-30": {"台北": ["陰天", "大雨", "雷陣雨", "陰天"], "新北": ["雷陣雨", "陰天", "雷陣雨", "陣雨"], "桃園": ["晴天", "雷陣雨", "大雨", "大雨"], "台中": ["雷陣雨", "陣雨", "大雨", "陣雨"], "台南": ["陣雨", "雷陣雨", "多雲", "雷陣雨"], "高雄": ["陣雨", "晴天", "大雨", "多雲"]},
+                    "10-31": {"台北": ["陰天", "陰天", "陣雨", "多雲"], "新北": ["大雨", "陣雨", "多雲", "晴天"], "桃園": ["陣雨", "陣雨", "陣雨", "陰天"], "台中": ["多雲", "雷陣雨", "多雲", "大雨"], "台南": ["陰天", "陣雨", "雷陣雨", "陰天"], "高雄": ["大雨", "陣雨", "雷陣雨", "大雨"]},
+                    "11-01": {"台北": ["晴天", "大雨", "大雨", "晴天"], "新北": ["多雲", "雷陣雨", "大雨", "大雨"], "桃園": ["多雲", "陣雨", "大雨", "大雨"], "台中": ["陣雨", "晴天", "晴天", "大雨"], "台南": ["陰天", "多雲", "雷陣雨", "陣雨"], "高雄": ["多雲", "陰天", "晴天", "大雨"]},
+                    "11-02": {"台北": ["陣雨", "多雲", "陰天", "陣雨"], "新北": ["多雲", "大雨", "大雨", "陰天"], "桃園": ["陣雨", "晴天", "大雨", "多雲"], "台中": ["雷陣雨", "陰天", "陰天", "陰天"], "台南": ["晴天", "陣雨", "大雨", "雷陣雨"], "高雄": ["雷陣雨", "大雨", "大雨", "大雨"]},
+                    "11-03": {"台北": ["大雨", "多雲", "多雲", "大雨"], "新北": ["陣雨", "陣雨", "多雲", "雷陣雨"], "桃園": ["陰天", "多雲", "大雨", "陣雨"], "台中": ["陰天", "大雨", "多雲", "晴天"], "台南": ["雷陣雨", "晴天", "多雲", "大雨"], "高雄": ["晴天", "陣雨", "陣雨", "陰天"]},
+                    "11-04": {"台北": ["大雨", "陣雨", "雷陣雨", "陣雨"], "新北": ["多雲", "雷陣雨", "大雨", "雷陣雨"], "桃園": ["晴天", "晴天", "陣雨", "陰天"], "台中": ["晴天", "雷陣雨", "雷陣雨", "晴天"], "台南": ["陣雨", "多雲", "陣雨", "多雲"], "高雄": ["雷陣雨", "陣雨", "雷陣雨", "多雲"]},
+                    "11-05": {"台北": ["多雲", "晴天", "大雨", "晴天"], "新北": ["雷陣雨", "陰天", "陰天", "大雨"], "桃園": ["多雲", "晴天", "多雲", "多雲"], "台中": ["陣雨", "陣雨", "大雨", "陰天"], "台南": ["多雲", "陣雨", "陰天", "陣雨"], "高雄": ["大雨", "多雲", "陰天", "陣雨"]},
+                    "11-06": {"台北": ["多雲", "晴天", "雷陣雨", "多雲"], "新北": ["雷陣雨", "陣雨", "陣雨", "陰天"], "桃園": ["多雲", "多雲", "陣雨", "雷陣雨"], "台中": ["陰天", "雷陣雨", "陰天", "雷陣雨"], "台南": ["晴天", "陣雨", "晴天", "陣雨"], "高雄": ["大雨", "晴天", "晴天", "陰天"]},
+                    "11-07": {"台北": ["大雨", "多雲", "雷陣雨", "雷陣雨"], "新北": ["陰天", "陣雨", "陰天", "陣雨"], "桃園": ["大雨", "雷陣雨", "陣雨", "陣雨"], "台中": ["陣雨", "陣雨", "大雨", "雷陣雨"], "台南": ["陰天", "大雨", "大雨", "陰天"], "高雄": ["陰天", "多雲", "雷陣雨", "陣雨"]},
+                    "11-08": {"台北": ["晴天", "晴天", "大雨", "雷陣雨"], "新北": ["多雲", "大雨", "雷陣雨", "雷陣雨"], "桃園": ["多雲", "多雲", "陣雨", "陰天"], "台中": ["雷陣雨", "晴天", "大雨", "雷陣雨"], "台南": ["大雨", "多雲", "大雨", "多雲"], "高雄": ["晴天", "多雲", "陣雨", "雷陣雨"]},
+                    "11-09": {"台北": ["陰天", "晴天", "晴天", "大雨"], "新北": ["大雨", "大雨", "陣雨", "大雨"], "桃園": ["陰天", "雷陣雨", "晴天", "雷陣雨"], "台中": ["雷陣雨", "陰天", "大雨", "雷陣雨"], "台南": ["大雨", "陣雨", "大雨", "陰天"], "高雄": ["大雨", "陰天", "大雨", "雷陣雨"]},
+                    "11-10": {"台北": ["陣雨", "多雲", "多雲", "雷陣雨"], "新北": ["陰天", "大雨", "陰天", "晴天"], "桃園": ["雷陣雨", "多雲", "多雲", "陰天"], "台中": ["多雲", "陣雨", "多雲", "陰天"], "台南": ["雷陣雨", "晴天", "大雨", "多雲"], "高雄": ["陣雨", "晴天", "雷陣雨", "雷陣雨"]},
+                    "11-11": {"台北": ["多雲", "雷陣雨", "大雨", "陣雨"], "新北": ["晴天", "大雨", "晴天", "多雲"], "桃園": ["陰天", "大雨", "晴天", "陣雨"], "台中": ["多雲", "晴天", "晴天", "陣雨"], "台南": ["晴天", "多雲", "陣雨", "晴天"], "高雄": ["雷陣雨", "陣雨", "多雲", "晴天"]},
+                    "11-12": {"台北": ["晴天", "多雲", "雷陣雨", "雷陣雨"], "新北": ["多雲", "多雲", "大雨", "晴天"], "桃園": ["大雨", "陣雨", "雷陣雨", "晴天"], "台中": ["晴天", "多雲", "多雲", "晴天"], "台南": ["陣雨", "雷陣雨", "晴天", "多雲"], "高雄": ["大雨", "陰天", "陰天", "雷陣雨"]},
+                    "11-13": {"台北": ["晴天", "陣雨", "大雨", "雷陣雨"], "新北": ["陰天", "晴天", "雷陣雨", "晴天"], "桃園": ["陣雨", "雷陣雨", "晴天", "多雲"], "台中": ["大雨", "雷陣雨", "晴天", "雷陣雨"], "台南": ["陣雨", "雷陣雨", "多雲", "晴天"], "高雄": ["晴天", "雷陣雨", "陰天", "陰天"]},
+                    "11-14": {"台北": ["大雨", "陰天", "多雲", "多雲"], "新北": ["大雨", "雷陣雨", "陣雨", "多雲"], "桃園": ["晴天", "陣雨", "陣雨", "晴天"], "台中": ["晴天", "晴天", "晴天", "雷陣雨"], "台南": ["雷陣雨", "晴天", "陣雨", "大雨"], "高雄": ["晴天", "雷陣雨", "陰天", "多雲"]},
+                    "11-15": {"台北": ["雷陣雨", "陣雨", "晴天", "晴天"], "新北": ["大雨", "雷陣雨", "大雨", "大雨"], "桃園": ["大雨", "大雨", "雷陣雨", "大雨"], "台中": ["陰天", "雷陣雨", "多雲", "多雲"], "台南": ["陰天", "雷陣雨", "多雲", "多雲"], "高雄": ["多雲", "雷陣雨", "陣雨", "多雲"]},
+                    "11-16": {"台北": ["陣雨", "大雨", "大雨", "多雲"], "新北": ["大雨", "晴天", "陣雨", "雷陣雨"], "桃園": ["陣雨", "大雨", "雷陣雨", "雷陣雨"], "台中": ["大雨", "晴天", "陰天", "多雲"], "台南": ["晴天", "大雨", "雷陣雨", "晴天"], "高雄": ["多雲", "晴天", "多雲", "大雨"]},
+                    "11-17": {"台北": ["多雲", "雷陣雨", "陣雨", "大雨"], "新北": ["大雨", "陰天", "晴天", "多雲"], "桃園": ["陰天", "雷陣雨", "陣雨", "晴天"], "台中": ["大雨", "雷陣雨", "多雲", "雷陣雨"], "台南": ["雷陣雨", "晴天", "雷陣雨", "大雨"], "高雄": ["晴天", "陰天", "多雲", "大雨"]},
+                    "11-18": {"台北": ["陣雨", "陣雨", "陰天", "雷陣雨"], "新北": ["陰天", "陣雨", "陰天", "晴天"], "桃園": ["陰天", "陰天", "雷陣雨", "晴天"], "台中": ["多雲", "雷陣雨", "陰天", "雷陣雨"], "台南": ["陰天", "晴天", "多雲", "雷陣雨"], "高雄": ["陣雨", "陣雨", "晴天", "陰天"]},
+                    "11-19": {"台北": ["雷陣雨", "陰天", "多雲", "大雨"], "新北": ["陰天", "陰天", "陰天", "雷陣雨"], "桃園": ["陣雨", "雷陣雨", "陣雨", "大雨"], "台中": ["多雲", "晴天", "大雨", "多雲"], "台南": ["晴天", "雷陣雨", "雷陣雨", "晴天"], "高雄": ["多雲", "雷陣雨", "陰天", "雷陣雨"]},
+                    "11-20": {"台北": ["陣雨", "陣雨", "大雨", "大雨"], "新北": ["晴天", "陰天", "多雲", "雷陣雨"], "桃園": ["陰天", "雷陣雨", "陣雨", "晴天"], "台中": ["多雲", "晴天", "雷陣雨", "大雨"], "台南": ["大雨", "陣雨", "陰天", "晴天"], "高雄": ["大雨", "晴天", "陣雨", "雷陣雨"]},
+                    "11-21": {"台北": ["雷陣雨", "雷陣雨", "陣雨", "晴天"], "新北": ["大雨", "雷陣雨", "陰天", "陰天"], "桃園": ["陰天", "多雲", "晴天", "多雲"], "台中": ["大雨", "晴天", "雷陣雨", "大雨"], "台南": ["雷陣雨", "雷陣雨", "陰天", "多雲"], "高雄": ["多雲", "雷陣雨", "雷陣雨", "陰天"]},
+                    "11-22": {"台北": ["雷陣雨", "陰天", "晴天", "晴天"], "新北": ["大雨", "大雨", "雷陣雨", "雷陣雨"], "桃園": ["雷陣雨", "晴天", "雷陣雨", "陰天"], "台中": ["陰天", "大雨", "多雲", "晴天"], "台南": ["雷陣雨", "大雨", "大雨", "多雲"], "高雄": ["大雨", "陣雨", "大雨", "陣雨"]},
+                    "11-23": {"台北": ["雷陣雨", "晴天", "大雨", "大雨"], "新北": ["多雲", "多雲", "晴天", "晴天"], "桃園": ["陣雨", "陰天", "多雲", "雷陣雨"], "台中": ["晴天", "多雲", "晴天", "多雲"], "台南": ["晴天", "陰天", "雷陣雨", "雷陣雨"], "高雄": ["陣雨", "大雨", "多雲", "多雲"]},
+                    "11-24": {"台北": ["雷陣雨", "陣雨", "晴天", "晴天"], "新北": ["晴天", "大雨", "大雨", "陰天"], "桃園": ["大雨", "大雨", "大雨", "陰天"], "台中": ["陣雨", "陣雨", "晴天", "陰天"], "台南": ["大雨", "陰天", "陣雨", "陰天"], "高雄": ["多雲", "陣雨", "大雨", "多雲"]},
+                    "11-25": {"台北": ["多雲", "雷陣雨", "多雲", "雷陣雨"], "新北": ["雷陣雨", "陣雨", "大雨", "陰天"], "桃園": ["多雲", "陣雨", "雷陣雨", "陣雨"], "台中": ["陣雨", "陰天", "陣雨", "多雲"], "台南": ["陰天", "大雨", "陰天", "陣雨"], "高雄": ["多雲", "大雨", "晴天", "晴天"]},
+                    "11-26": {"台北": ["大雨", "大雨", "雷陣雨", "多雲"], "新北": ["陣雨", "大雨", "晴天", "雷陣雨"], "桃園": ["晴天", "陣雨", "陰天", "陰天"], "台中": ["陰天", "晴天", "多雲", "多雲"], "台南": ["雷陣雨", "雷陣雨", "雷陣雨", "多雲"], "高雄": ["大雨", "雷陣雨", "雷陣雨", "多雲"]},
+                    "11-27": {"台北": ["多雲", "大雨", "陣雨", "陣雨"], "新北": ["晴天", "大雨", "多雲", "晴天"], "桃園": ["晴天", "陣雨", "大雨", "晴天"], "台中": ["大雨", "雷陣雨", "多雲", "陣雨"], "台南": ["晴天", "雷陣雨", "陣雨", "陣雨"], "高雄": ["多雲", "陣雨", "雷陣雨", "多雲"]},
+                    "11-28": {"台北": ["雷陣雨", "大雨", "陰天", "陰天"], "新北": ["陣雨", "陰天", "大雨", "雷陣雨"], "桃園": ["雷陣雨", "晴天", "晴天", "大雨"], "台中": ["大雨", "陰天", "陰天", "陰天"], "台南": ["陣雨", "陣雨", "晴天", "大雨"], "高雄": ["大雨", "陰天", "陰天", "晴天"]},
+                    "11-29": {"台北": ["雷陣雨", "陣雨", "大雨", "雷陣雨"], "新北": ["晴天", "多雲", "陣雨", "陰天"], "桃園": ["晴天", "陣雨", "大雨", "晴天"], "台中": ["陰天", "雷陣雨", "陣雨", "陰天"], "台南": ["多雲", "陣雨", "雷陣雨", "陣雨"], "高雄": ["陣雨", "晴天", "雷陣雨", "多雲"]},
+                    "11-30": {"台北": ["雷陣雨", "多雲", "陣雨", "大雨"], "新北": ["陣雨", "雷陣雨", "晴天", "陰天"], "桃園": ["雷陣雨", "多雲", "大雨", "大雨"], "台中": ["晴天", "大雨", "陣雨", "晴天"], "台南": ["陰天", "雷陣雨", "大雨", "大雨"], "高雄": ["雷陣雨", "大雨", "多雲", "晴天"]},
+                    "12-01": {"台北": ["陰天", "多雲", "陣雨", "陣雨"], "新北": ["大雨", "陣雨", "多雲", "晴天"], "桃園": ["晴天", "大雨", "雷陣雨", "陰天"], "台中": ["陰天", "晴天", "陣雨", "多雲"], "台南": ["大雨", "雷陣雨", "陣雨", "雷陣雨"], "高雄": ["大雨", "陰天", "多雲", "陰天"]},
+                    "12-02": {"台北": ["陣雨", "雷陣雨", "多雲", "陰天"], "新北": ["雷陣雨", "晴天", "大雨", "晴天"], "桃園": ["多雲", "晴天", "晴天", "多雲"], "台中": ["大雨", "陣雨", "晴天", "雷陣雨"], "台南": ["陣雨", "陰天", "大雨", "大雨"], "高雄": ["晴天", "晴天", "大雨", "大雨"]},
+                    "12-03": {"台北": ["陣雨", "雷陣雨", "晴天", "陣雨"], "新北": ["大雨", "多雲", "多雲", "陣雨"], "桃園": ["雷陣雨", "大雨", "雷陣雨", "多雲"], "台中": ["陰天", "陰天", "大雨", "大雨"], "台南": ["多雲", "晴天", "晴天", "陣雨"], "高雄": ["陣雨", "多雲", "陰天", "陰天"]},
+                    "12-04": {"台北": ["陣雨", "陣雨", "大雨", "多雲"], "新北": ["陣雨", "陣雨", "陰天", "雷陣雨"], "桃園": ["雷陣雨", "雷陣雨", "多雲", "陣雨"], "台中": ["陣雨", "大雨", "晴天", "陣雨"], "台南": ["雷陣雨", "陣雨", "雷陣雨", "雷陣雨"], "高雄": ["大雨", "陰天", "晴天", "雷陣雨"]},
+                    "12-05": {"台北": ["大雨", "雷陣雨", "陣雨", "雷陣雨"], "新北": ["晴天", "陰天", "陰天", "雷陣雨"], "桃園": ["雷陣雨", "雷陣雨", "多雲", "晴天"], "台中": ["陰天", "雷陣雨", "多雲", "雷陣雨"], "台南": ["晴天", "陰天", "陣雨", "雷陣雨"], "高雄": ["陰天", "陰天", "陰天", "雷陣雨"]},
+                    "12-06": {"台北": ["晴天", "陰天", "多雲", "雷陣雨"], "新北": ["雷陣雨", "晴天", "大雨", "陰天"], "桃園": ["陰天", "雷陣雨", "雷陣雨", "陣雨"], "台中": ["陣雨", "多雲", "陰天", "雷陣雨"], "台南": ["雷陣雨", "陣雨", "雷陣雨", "陰天"], "高雄": ["陣雨", "晴天", "陰天", "晴天"]},
+                    "12-07": {"台北": ["雷陣雨", "多雲", "雷陣雨", "陣雨"], "新北": ["晴天", "陣雨", "陣雨", "陣雨"], "桃園": ["大雨", "多雲", "晴天", "晴天"], "台中": ["陣雨", "雷陣雨", "陰天", "陰天"], "台南": ["陰天", "陰天", "陰天", "多雲"], "高雄": ["大雨", "雷陣雨", "陰天", "雷陣雨"]},
+                    "12-08": {"台北": ["晴天", "陣雨", "雷陣雨", "雷陣雨"], "新北": ["陰天", "雷陣雨", "晴天", "晴天"], "桃園": ["晴天", "晴天", "陣雨", "晴天"], "台中": ["陣雨", "陰天", "陣雨", "陣雨"], "台南": ["雷陣雨", "多雲", "陣雨", "大雨"], "高雄": ["晴天", "雷陣雨", "雷陣雨", "雷陣雨"]},
+                    "12-09": {"台北": ["陰天", "陣雨", "陣雨", "陰天"], "新北": ["雷陣雨", "陣雨", "陰天", "陰天"], "桃園": ["多雲", "陰天", "陣雨", "陣雨"], "台中": ["陰天", "雷陣雨", "晴天", "晴天"], "台南": ["大雨", "陰天", "晴天", "陰天"], "高雄": ["大雨", "多雲", "多雲", "大雨"]},
+                    "12-10": {"台北": ["陣雨", "陣雨", "多雲", "雷陣雨"], "新北": ["陰天", "大雨", "陰天", "晴天"], "桃園": ["陰天", "陰天", "陰天", "晴天"], "台中": ["晴天", "陣雨", "陣雨", "雷陣雨"], "台南": ["大雨", "多雲", "多雲", "陣雨"], "高雄": ["多雲", "大雨", "雷陣雨", "陣雨"]},
+                    "12-11": {"台北": ["大雨", "陣雨", "陣雨", "雷陣雨"], "新北": ["陣雨", "大雨", "晴天", "多雲"], "桃園": ["多雲", "陰天", "大雨", "陰天"], "台中": ["雷陣雨", "大雨", "多雲", "陣雨"], "台南": ["大雨", "雷陣雨", "晴天", "大雨"], "高雄": ["多雲", "晴天", "陣雨", "大雨"]},
+                    "12-12": {"台北": ["晴天", "多雲", "陣雨", "陰天"], "新北": ["陰天", "陰天", "陣雨", "陰天"], "桃園": ["雷陣雨", "陰天", "陰天", "雷陣雨"], "台中": ["陣雨", "陰天", "大雨", "雷陣雨"], "台南": ["多雲", "陰天", "晴天", "陰天"], "高雄": ["雷陣雨", "陣雨", "陣雨", "多雲"]},
+                    "12-13": {"台北": ["陰天", "大雨", "陣雨", "雷陣雨"], "新北": ["陣雨", "多雲", "多雲", "大雨"], "桃園": ["陣雨", "大雨", "晴天", "多雲"], "台中": ["陣雨", "晴天", "雷陣雨", "雷陣雨"], "台南": ["多雲", "陰天", "多雲", "晴天"], "高雄": ["多雲", "陣雨", "多雲", "雷陣雨"]},
+                    "12-14": {"台北": ["陰天", "雷陣雨", "陰天", "雷陣雨"], "新北": ["晴天", "陣雨", "晴天", "雷陣雨"], "桃園": ["大雨", "晴天", "晴天", "大雨"], "台中": ["大雨", "陣雨", "晴天", "陣雨"], "台南": ["雷陣雨", "大雨", "陣雨", "多雲"], "高雄": ["雷陣雨", "多雲", "陰天", "雷陣雨"]},
+                    "12-15": {"台北": ["多雲", "陰天", "晴天", "雷陣雨"], "新北": ["雷陣雨", "陣雨", "大雨", "陰天"], "桃園": ["晴天", "多雲", "大雨", "陰天"], "台中": ["雷陣雨", "陣雨", "晴天", "陰天"], "台南": ["晴天", "多雲", "陣雨", "晴天"], "高雄": ["大雨", "雷陣雨", "雷陣雨", "大雨"]},
+                    "12-16": {"台北": ["晴天", "晴天", "晴天", "晴天"], "新北": ["多雲", "陰天", "雷陣雨", "多雲"], "桃園": ["雷陣雨", "多雲", "晴天", "雷陣雨"], "台中": ["大雨", "陣雨", "陣雨", "多雲"], "台南": ["雷陣雨", "陰天", "陰天", "陰天"], "高雄": ["陣雨", "陰天", "雷陣雨", "多雲"]},
+                    "12-17": {"台北": ["雷陣雨", "多雲", "大雨", "陰天"], "新北": ["陰天", "雷陣雨", "雷陣雨", "晴天"], "桃園": ["陰天", "陣雨", "多雲", "多雲"], "台中": ["陰天", "多雲", "陣雨", "雷陣雨"], "台南": ["陣雨", "雷陣雨", "雷陣雨", "雷陣雨"], "高雄": ["晴天", "晴天", "多雲", "陰天"]},
+                    "12-18": {"台北": ["雷陣雨", "晴天", "晴天", "雷陣雨"], "新北": ["陰天", "大雨", "晴天", "大雨"], "桃園": ["晴天", "陰天", "陣雨", "多雲"], "台中": ["晴天", "多雲", "陣雨", "晴天"], "台南": ["雷陣雨", "大雨", "陣雨", "多雲"], "高雄": ["陰天", "陣雨", "多雲", "大雨"]},
+                    "12-19": {"台北": ["多雲", "陣雨", "雷陣雨", "陰天"], "新北": ["晴天", "陣雨", "陣雨", "晴天"], "桃園": ["大雨", "陰天", "陰天", "雷陣雨"], "台中": ["陣雨", "大雨", "多雲", "陰天"], "台南": ["陰天", "大雨", "陰天", "陣雨"], "高雄": ["陰天", "大雨", "陣雨", "多雲"]},
+                    "12-20": {"台北": ["陣雨", "大雨", "陣雨", "陣雨"], "新北": ["陣雨", "陰天", "大雨", "陣雨"], "桃園": ["陣雨", "雷陣雨", "晴天", "雷陣雨"], "台中": ["大雨", "晴天", "多雲", "晴天"], "台南": ["多雲", "大雨", "陣雨", "雷陣雨"], "高雄": ["大雨", "大雨", "晴天", "大雨"]},
+                    "12-21": {"台北": ["雷陣雨", "多雲", "多雲", "大雨"], "新北": ["雷陣雨", "多雲", "多雲", "多雲"], "桃園": ["陰天", "晴天", "晴天", "陰天"], "台中": ["陣雨", "雷陣雨", "陰天", "雷陣雨"], "台南": ["陰天", "陰天", "雷陣雨", "陰天"], "高雄": ["晴天", "晴天", "雷陣雨", "雷陣雨"]},
+                    "12-22": {"台北": ["晴天", "多雲", "大雨", "陰天"], "新北": ["晴天", "陰天", "大雨", "多雲"], "桃園": ["大雨", "雷陣雨", "晴天", "陰天"], "台中": ["陰天", "雷陣雨", "晴天", "陰天"], "台南": ["大雨", "陰天", "雷陣雨", "雷陣雨"], "高雄": ["多雲", "大雨", "多雲", "晴天"]},
+                    "12-23": {"台北": ["陣雨", "大雨", "晴天", "雷陣雨"], "新北": ["多雲", "大雨", "雷陣雨", "晴天"], "桃園": ["雷陣雨", "陣雨", "陣雨", "陰天"], "台中": ["晴天", "陣雨", "陣雨", "陰天"], "台南": ["晴天", "大雨", "雷陣雨", "雷陣雨"], "高雄": ["陣雨", "雷陣雨", "雷陣雨", "晴天"]},
+                    "12-24": {"台北": ["陣雨", "大雨", "晴天", "陰天"], "新北": ["陣雨", "陣雨", "多雲", "雷陣雨"], "桃園": ["雷陣雨", "陣雨", "雷陣雨", "雷陣雨"], "台中": ["晴天", "多雲", "大雨", "雷陣雨"], "台南": ["晴天", "陰天", "雷陣雨", "晴天"], "高雄": ["雷陣雨", "大雨", "雷陣雨", "晴天"]},
+                    "12-25": {"台北": ["雷陣雨", "大雨", "晴天", "大雨"], "新北": ["陰天", "大雨", "雷陣雨", "陣雨"], "桃園": ["多雲", "大雨", "多雲", "陰天"], "台中": ["雷陣雨", "陣雨", "陰天", "雷陣雨"], "台南": ["晴天", "多雲", "雷陣雨", "雷陣雨"], "高雄": ["雷陣雨", "陣雨", "陣雨", "陰天"]},
+                    "12-26": {"台北": ["晴天", "多雲", "陰天", "陰天"], "新北": ["陰天", "大雨", "晴天", "晴天"], "桃園": ["雷陣雨", "陰天", "大雨", "陰天"], "台中": ["多雲", "陣雨", "大雨", "陰天"], "台南": ["晴天", "陰天", "陣雨", "雷陣雨"], "高雄": ["晴天", "陰天", "晴天", "大雨"]},
+                    "12-27": {"台北": ["晴天", "晴天", "陰天", "大雨"], "新北": ["雷陣雨", "陣雨", "陰天", "大雨"], "桃園": ["晴天", "晴天", "陰天", "雷陣雨"], "台中": ["晴天", "大雨", "晴天", "大雨"], "台南": ["陰天", "陰天", "多雲", "大雨"], "高雄": ["陣雨", "晴天", "大雨", "陰天"]},
+                    "12-28": {"台北": ["大雨", "陰天", "晴天", "雷陣雨"], "新北": ["晴天", "陣雨", "大雨", "大雨"], "桃園": ["雷陣雨", "陣雨", "多雲", "多雲"], "台中": ["陰天", "陰天", "陰天", "陣雨"], "台南": ["多雲", "雷陣雨", "晴天", "雷陣雨"], "高雄": ["陰天", "陰天", "雷陣雨", "晴天"]},
+                    "12-29": {"台北": ["晴天", "陰天", "多雲", "陰天"], "新北": ["陣雨", "晴天", "大雨", "雷陣雨"], "桃園": ["雷陣雨", "陣雨", "多雲", "晴天"], "台中": ["雷陣雨", "陣雨", "大雨", "多雲"], "台南": ["晴天", "陣雨", "陣雨", "陣雨"], "高雄": ["多雲", "陰天", "陰天", "晴天"]},
+                    "12-30": {"台北": ["多雲", "晴天", "多雲", "雷陣雨"], "新北": ["雷陣雨", "多雲", "大雨", "陣雨"], "桃園": ["陣雨", "雷陣雨", "晴天", "大雨"], "台中": ["多雲", "陰天", "陣雨", "晴天"], "台南": ["晴天", "陰天", "晴天", "大雨"], "高雄": ["陰天", "大雨", "晴天", "陰天"]},
+                    "12-31": {"台北": ["大雨", "陣雨", "雷陣雨", "雷陣雨"], "新北": ["陰天", "雷陣雨", "晴天", "陣雨"], "桃園": ["陣雨", "雷陣雨", "晴天", "陣雨"], "台中": ["陰天", "晴天", "晴天", "雷陣雨"], "台南": ["陣雨", "大雨", "陣雨", "雷陣雨"], "高雄": ["大雨", "大雨", "晴天", "多雲"]}
                 };
+
+                const historyData = ref({});
 
                 const fetchCloudData = async () => {
                     isLoading.value = true;
@@ -188,134 +440,217 @@
                             historyData.value = JSON.parse(gistData.files[fileName].content);
                         }
                     } catch (e) { console.error(e); }
-                    finally { isLoading.value = false; updateChart(); }
+                    finally {
+                        isLoading.value = false;
+                        // 自動將週次/月份/月曆切換到最新一筆有資料的月份，方便瀏覽者一打開就看到最新進度
+                        if (activeKeys.value.length > 0) {
+                            selectedMonth.value = currentMonthKey.value;
+                            calendarMonth.value = currentMonthKey.value;
+                        }
+                        updateMonthlyChart();
+                        updateWeeklyChart();
+                    }
                 };
 
                 const activeKeys = computed(() => Object.keys(historyData.value).filter(k => historyData.value[k] && historyData.value[k].hasData).sort());
                 const latestKey = computed(() => activeKeys.value.length > 0 ? activeKeys.value[activeKeys.value.length - 1] : '07-01');
                 const latestDayInt = computed(() => parseInt(latestKey.value.substring(3)));
+                const currentMonthKey = computed(() => latestKey.value.substring(0, 2));
 
                 const latestDayBooking = computed(() => historyData.value[latestKey.value]?.b2026 ?? '-');
                 const latestDayCancel = computed(() => historyData.value[latestKey.value]?.c2026 ?? '-');
                 const latestLastYearDayBooking = computed(() => base2025Bookings[latestKey.value] || 0);
+
+                const totalOnlineBooking = computed(() => {
+                    let total = 0; for (let d = 1; d <= latestDayInt.value; d++) { total += (historyData.value[`${currentMonthKey.value}-${d < 10 ? '0' + d : d}`]?.b2026 || 0); } return total;
+                });
+                const totalCancelCount = computed(() => {
+                    let total = 0; for (let d = 1; d <= latestDayInt.value; d++) { total += (historyData.value[`${currentMonthKey.value}-${d < 10 ? '0' + d : d}`]?.c2026 || 0); } return total;
+                });
                 
-                const totalOnlineBookingComputed = computed(() => {
-                    let total = 0; for (let d = 1; d <= latestDayInt.value; d++) { total += (historyData.value[`07-${d < 10 ? '0' + d : d}`]?.b2026 || 0); } return total;
-                });
-                const totalCancelCountComputed = computed(() => {
-                    let total = 0; for (let d = 1; d <= latestDayInt.value; d++) { total += (historyData.value[`07-${d < 10 ? '0' + d : d}`]?.c2026 || 0); } return total;
-                });
+                const formattedLatestDay = computed(() => `${parseInt(currentMonthKey.value)}/${latestDayInt.value}`);
+                
                 const cumulativeLastYearBooking = computed(() => {
-                    let total = 0; for (let d = 1; d <= latestDayInt.value; d++) { total += (base2025Bookings[`07-${d < 10 ? '0' + d : d}`] || 0); } return total;
+                    let total = 0; for (let d = 1; d <= latestDayInt.value; d++) { total += (base2025Bookings[`${currentMonthKey.value}-${d < 10 ? '0' + d : d}`] || 0); } return total;
                 });
 
-                const targetProgressThreshold = computed(() => latestDayInt.value <= 0 ? 0 : parseFloat(((latestDayInt.value / 31) * 100).toFixed(1)));
-                const yesterdayAchievementRate = computed(() => totalOnlineBookingComputed.value ? ((totalOnlineBookingComputed.value / globalTarget) * 100).toFixed(1) : '0.0');
-                const progressGapPercent = computed(() => parseFloat((parseFloat(yesterdayAchievementRate.value) - targetProgressThreshold.value).toFixed(2)));
-                const monthYoY = computed(() => cumulativeLastYearBooking.value ? (((totalOnlineBookingComputed.value - cumulativeLastYearBooking.value) / cumulativeLastYearBooking.value) * 100).toFixed(1) : '0.0');
-                const cancelRate = computed(() => totalOnlineBookingComputed.value ? ((totalCancelCountComputed.value / totalOnlineBookingComputed.value) * 100).toFixed(1) : '0.0');
+                const previousMonthKey = computed(() => {
+                    const m = parseInt(currentMonthKey.value) - 1;
+                    return m < 1 ? null : String(m).padStart(2, '0');
+                });
+                const cumulativePrevMonthBooking = computed(() => {
+                    if (!previousMonthKey.value) return 0;
+                    let total = 0; for (let d = 1; d <= latestDayInt.value; d++) { total += (historyData.value[`${previousMonthKey.value}-${d < 10 ? '0' + d : d}`]?.b2026 || 0); } return total;
+                });
 
-                const checkHasData = (day) => !!historyData.value[`07-${day < 10 ? '0' + day : day}`]?.hasData;
-                const getCalendarDayData = (day, year) => { const key = `07-${day < 10 ? '0' + day : day}`; return year === '2026' ? (historyData.value[key]?.b2026 ?? '') : (base2025Bookings[key] || ''); };
+                const targetProgressThreshold = computed(() => { 
+                    const totalDaysInCurrentMonth = daysInMonth[currentMonthKey.value] || 31;
+                    return latestDayInt.value <= 0 ? 0 : parseFloat(((latestDayInt.value / totalDaysInCurrentMonth) * 100).toFixed(1)); 
+                });
                 
-                const transIcon = (w) => ({ '晴天':'☀️', '多雲':'☁️', '陰天':'🌥️', '陣雨':'🌧️', '雷陣雨':'⛈️', '大雨':'🌧️', '暴雨':'⛈️' }[w] || '☁️');
+                const yesterdayAchievementRate = computed(() => ((totalOnlineBooking.value / globalTarget) * 100).toFixed(1));
+                const progressGapPercent = computed(() => parseFloat((parseFloat(yesterdayAchievementRate.value) - targetProgressThreshold.value).toFixed(2)));
+                
+                const monthYoY = computed(() => cumulativeLastYearBooking.value ? (((totalOnlineBooking.value - cumulativeLastYearBooking.value) / cumulativeLastYearBooking.value) * 100).toFixed(1) : 0);
+                const monthMoM = computed(() => cumulativePrevMonthBooking.value ? (((totalOnlineBooking.value - cumulativePrevMonthBooking.value) / cumulativePrevMonthBooking.value) * 100).toFixed(1) : 0);
+                const cancelRate = computed(() => totalOnlineBooking.value ? ((totalCancelCount.value / totalOnlineBooking.value) * 100).toFixed(1) : 0);
+
+                const checkHasData = (day) => !!historyData.value[`${calendarMonth.value}-${day < 10 ? '0' + day : day}`]?.hasData;
+                const getCalendarDayData = (day, year) => {
+                    const key = `${calendarMonth.value}-${day < 10 ? '0' + day : day}`;
+                    return year === '2026' ? (historyData.value[key]?.b2026 ?? '') : (base2025Bookings[key] || '');
+                };
+                
+                const transIcon = (w) => { if (!w) return ''; return { '晴天':'☀️', '多雲':'☁️', '陰天':'🌥️', '陣雨':'🌧️', '雷陣雨':'⛈️', '大雨':'🌧️', '暴雨':'⛈️' }[w] || '☁️'; };
                 const getCalWeatherSlots = (day, city, year) => {
-                    const key = `07-${day < 10 ? '0' + day : day}`;
-                    return year === '2026' ? (historyData.value[key]?.w2026?.[city] || ['','','','']).map(w => transIcon(w)) : (weather2025All[key]?.[city] || ['多雲','多雲','多雲','多雲']).map(w => transIcon(w));
+                    const key = `${calendarMonth.value}-${day < 10 ? '0' + day : day}`;
+                    if (year === '2026') {
+                        return (historyData.value[key]?.w2026?.[city] || ['','','','']).map(w => transIcon(w));
+                    } else {
+                        return (weather2025All[key]?.[city] || ['多雲','多雲','多雲','多雲']).map(w => transIcon(w));
+                    }
                 };
 
-                let lineChart = null;
-                const updateChart = () => {
-                    if (!lineChart) return; const labels = []; const data2026 = []; const data2025 = [];
-                    for (let d = 1; d <= 31; d++) {
-                        const key = `07-${d < 10 ? '0' + d : d}`;
-                        if (historyData.value[key]?.hasData) { labels.push(`7/${d}`); data2026.push(historyData.value[key].b2026); data2025.push(base2025Bookings[key] || 0); }
+                const updateWeeklyChart = () => {
+                    if (!weeklyChart) return;
+                    const weekKeys = Object.keys(weekMap);
+                    const currentIndex = weekKeys.indexOf(selectedWeek.value);
+                    const prevWeekKey = currentIndex > 0 ? weekKeys[currentIndex - 1] : null;
+
+                    const currentData = weekMap[selectedWeek.value].map(d => historyData.value[d]?.b2026 ?? null);
+                    const prevData = prevWeekKey ? weekMap[prevWeekKey].map(d => historyData.value[d]?.b2026 ?? null) : [null,null,null,null,null,null,null];
+
+                    weeklyChart.data.datasets[0].data = currentData;
+                    weeklyChart.data.datasets[1].data = prevData;
+                    weeklyChart.update();
+                };
+
+                const onChartMonthChange = () => {
+                    calendarMonth.value = selectedMonth.value;
+                    updateMonthlyChart();
+                };
+
+                const updateMonthlyChart = () => {
+                    if (!lineChart) return;
+                    const month = selectedMonth.value;
+                    const totalDays = daysInMonth[month] || 31;
+                    const labels = []; const data2026 = []; const data2025 = [];
+                    for (let d = 1; d <= totalDays; d++) {
+                        const key = `${month}-${d < 10 ? '0' + d : d}`;
+                        if (historyData.value[key]?.hasData) {
+                            labels.push(`${parseInt(month)}/${d}`);
+                            data2026.push(historyData.value[key].b2026);
+                            data2025.push(key in base2025Bookings ? base2025Bookings[key] : null);
+                        }
                     }
                     lineChart.data.labels = labels; lineChart.data.datasets[0].data = data2026; lineChart.data.datasets[1].data = data2025; lineChart.update();
                 };
 
                 onMounted(() => {
+                    // 🚀 全月動態走勢圖初始化
                     const ctxL = document.getElementById('lineChart').getContext('2d');
-                    
                     lineChart = new Chart(ctxL, { 
                         type: 'line', 
-                        plugins: [ChartDataLabels],
+                        // 🚀 掛載我們自訂的圖例推擠套件 (legendMarginPlugin)
+                        plugins: [ChartDataLabels, legendMarginPlugin],
                         data: { 
                             labels: [], 
                             datasets: [
                                 { 
-                                    label: '今年', 
-                                    data: [], 
-                                    borderColor: '#ffcc00', 
-                                    backgroundColor: '#ffcc00', 
-                                    tension: 0.1, 
-                                    borderWidth: 3,
+                                    label: '2026 今年預約', data: [], borderColor: '#ffcc00', backgroundColor: '#ffcc00', tension: 0.1, borderWidth: 3,
                                     datalabels: {
-                                        // 🚀 智慧判定位置：如果今年數據 >= 去年數據，就放上面(top)，否則放下面(bottom)
-                                        align: function(context) {
-                                            const index = context.dataIndex;
-                                            const thisYearVal = context.dataset.data[index];
-                                            const lastYearVal = context.chart.data.datasets[1].data[index];
-                                            return (thisYearVal >= lastYearVal) ? 'top' : 'bottom';
-                                        },
-                                        anchor: function(context) {
-                                            const index = context.dataIndex;
-                                            const thisYearVal = context.dataset.data[index];
-                                            const lastYearVal = context.chart.data.datasets[1].data[index];
-                                            return (thisYearVal >= lastYearVal) ? 'end' : 'start';
-                                        },
-                                        color: '#b38f00',   
-                                        offset: 7,         
-                                        font: { weight: 'bold', size: 10 },
-                                        textStrokeColor: '#ffffff',
-                                        textStrokeWidth: 2
+                                        align: function(c) { const v0=c.dataset.data[c.dataIndex], v1=c.chart.data.datasets[1].data[c.dataIndex]; return v0>=v1 ? 'top' : 'bottom'; },
+                                        anchor: function(c) { const v0=c.dataset.data[c.dataIndex], v1=c.chart.data.datasets[1].data[c.dataIndex]; return v0>=v1 ? 'end' : 'start'; },
+                                        color: '#b38f00', offset: 7, font: { weight: 'bold', size: 10 }, textStrokeColor: '#ffffff', textStrokeWidth: 2
                                     }
                                 }, 
                                 { 
-                                    label: '去年', 
-                                    data: [], 
-                                    borderColor: '#111111', 
-                                    backgroundColor: '#666666', 
-                                    tension: 0.1, 
-                                    borderWidth: 2,
+                                    label: '2025 去年預約', data: [], borderColor: '#111111', backgroundColor: '#666666', tension: 0.1, borderWidth: 2,
                                     datalabels: {
-                                        // 🚀 智慧判定位置：如果去年數據 > 今年數據，就放上面(top)，否則放下面(bottom)
-                                        align: function(context) {
-                                            const index = context.dataIndex;
-                                            const lastYearVal = context.dataset.data[index];
-                                            const thisYearVal = context.chart.data.datasets[0].data[index];
-                                            return (lastYearVal > thisYearVal) ? 'top' : 'bottom';
-                                        },
-                                        anchor: function(context) {
-                                            const index = context.dataIndex;
-                                            const lastYearVal = context.dataset.data[index];
-                                            const thisYearVal = context.chart.data.datasets[0].data[index];
-                                            return (lastYearVal > thisYearVal) ? 'end' : 'start';
-                                        },
-                                        color: '#222222',   
-                                        offset: 7,         
-                                        font: { weight: 'bold', size: 10 },
-                                        textStrokeColor: '#ffffff',
-                                        textStrokeWidth: 2
+                                        align: function(c) { const v0=c.dataset.data[c.dataIndex], v1=c.chart.data.datasets[0].data[c.dataIndex]; return v0>v1 ? 'top' : 'bottom'; },
+                                        anchor: function(c) { const v0=c.dataset.data[c.dataIndex], v1=c.chart.data.datasets[0].data[c.dataIndex]; return v0>v1 ? 'end' : 'start'; },
+                                        color: '#222222', offset: 7, font: { weight: 'bold', size: 10 }, textStrokeColor: '#ffffff', textStrokeWidth: 2
                                     }
                                 }
                             ] 
                         }, 
                         options: { 
                             responsive: true, 
-                            maintainAspectRatio: false,
-                            layout: {
-                                padding: { top: 20, bottom: 20 }
+                            maintainAspectRatio: false, 
+                            // 🚀 修正 2：將 padding top 調回原本的 10，避免標題與圖表上方產生太大空白
+                            layout: { padding: { top: 10, bottom: 20 } }, 
+                            // 🚀 修正 3：加入 y 軸彈性留白空間 (grace)，確保最高點就算在最上面，也不會碰到圖例
+                            scales: {
+                                y: { grace: '15%' } 
                             },
-                            plugins: {
-                                datalabels: { display: true }
-                            }
+                            plugins: { 
+                                datalabels: { display: true },
+                                legend: { labels: { padding: 15 } }
+                            } 
                         } 
+                    });
+
+                    // 🚀 週次對比動態走勢圖初始化
+                    const ctxW = document.getElementById('weeklyChart').getContext('2d');
+                    weeklyChart = new Chart(ctxW, {
+                        type: 'line',
+                        // 🚀 掛載我們自訂的圖例推擠套件 (legendMarginPlugin)
+                        plugins: [ChartDataLabels, legendMarginPlugin],
+                        data: {
+                            labels: ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'],
+                            datasets: [
+                                {
+                                    label: '當週預約',
+                                    data: [],
+                                    borderColor: '#ffcc00', 
+                                    backgroundColor: '#ffcc00',
+                                    tension: 0.1,
+                                    borderWidth: 3,
+                                    datalabels: {
+                                        formatter: (value) => value === null ? "" : value,
+                                        align: function(c) { const v0=c.dataset.data[c.dataIndex]||0, v1=c.chart.data.datasets[1].data[c.dataIndex]||0; return v0>=v1 ? 'top' : 'bottom'; },
+                                        anchor: function(c) { const v0=c.dataset.data[c.dataIndex]||0, v1=c.chart.data.datasets[1].data[c.dataIndex]||0; return v0>=v1 ? 'end' : 'start'; },
+                                        color: '#b38f00', offset: 7, font: { weight: 'bold', size: 10 }, textStrokeColor: '#ffffff', textStrokeWidth: 2
+                                    }
+                                },
+                                {
+                                    label: '上週預約',
+                                    data: [],
+                                    // 🚀 修正 4：換上更輕更淡的檸檬淺黃 (邊框與背景)
+                                    borderColor: '#fef08a', 
+                                    backgroundColor: '#fef9c3',
+                                    tension: 0.1,
+                                    borderWidth: 2,
+                                    datalabels: {
+                                        formatter: (value) => value === null ? "" : value,
+                                        align: function(c) { const v0=c.dataset.data[c.dataIndex]||0, v1=c.chart.data.datasets[0].data[c.dataIndex]||0; return v0>v1 ? 'top' : 'bottom'; },
+                                        anchor: function(c) { const v0=c.dataset.data[c.dataIndex]||0, v1=c.chart.data.datasets[0].data[c.dataIndex]||0; return v0>v1 ? 'end' : 'start'; },
+                                        // 配上深琥珀色文字，確保極淺色線上依然好讀
+                                        color: '#b45309', offset: 7, font: { weight: 'bold', size: 10 }, textStrokeColor: '#ffffff', textStrokeWidth: 2
+                                    }
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            // 🚀 修正 2
+                            layout: { padding: { top: 10, bottom: 20 } },
+                            // 🚀 修正 3
+                            scales: {
+                                y: { grace: '15%' } 
+                            },
+                            plugins: { 
+                                datalabels: { display: true },
+                                legend: { labels: { padding: 15 } }
+                            },
+                            spanGaps: false
+                        }
                     });
                     fetchCloudData();
                 });
 
-                return { cities, isLoading, isCalendarExpanded, latestDayBooking, latestDayCancel, latestLastYearDayBooking, totalCancelCount: totalCancelCountComputed, formattedLatestDay: computed(() => `7/${latestDayInt.value}`), totalOnlineBooking: totalOnlineBookingComputed, cumulativeLastYearBooking, targetProgressThreshold, yesterdayAchievementRate, progressGapPercent, monthYoY, cancelRate, fetchCloudData, checkHasData, getCalWeatherSlots, getCalendarDayData };
+                return { cities, isLoading, isCalendarExpanded, selectedWeek, updateWeeklyChart, selectedMonth, updateMonthlyChart, onChartMonthChange, calendarMonth, calendarDaysCount, calendarLeadingBlanks, calendarMonthLabel, historyData, totalOnlineBooking, totalCancelCount, targetProgressThreshold, monthYoY, monthMoM, cumulativePrevMonthBooking, cancelRate, yesterdayAchievementRate, progressGapPercent, checkHasData, getCalendarDayData, getCalWeatherSlots, latestDayBooking, latestDayCancel, latestLastYearDayBooking, formattedLatestDay, cumulativeLastYearBooking, fetchCloudData };
             }
         }).mount('#app');
     </script>

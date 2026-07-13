@@ -171,24 +171,26 @@
             </div>
             
             <div v-show="isCalendarExpanded" class="p-3 border-t border-gray-200 bg-gray-50">
-                <div class="grid grid-cols-7 gap-1.5 bg-white border border-gray-200 p-1.5 rounded-xl text-xs">
-                    <div v-for="w in 7" :key="w" class="text-center font-black py-1.5 rounded-lg bg-yellow-50 border border-yellow-200 text-black text-xs">
+                <div class="grid grid-cols-1 sm:grid-cols-7 gap-2 sm:gap-1.5 bg-white sm:border sm:border-gray-200 p-0 sm:p-1.5 rounded-xl text-xs">
+                    <div v-for="w in 7" :key="w" class="hidden sm:block text-center font-black py-1.5 rounded-lg bg-yellow-50 border border-yellow-200 text-black text-xs">
                         {{ ['日','一','二','三','四','五','六'][w-1] }}
                     </div>
-                    <div v-for="b in calendarLeadingBlanks" :key="'blank'+b" class="bg-gray-50 border border-gray-100 rounded-lg p-1 min-h-[140px]"></div>
+                    <div v-for="b in calendarLeadingBlanks" :key="'blank'+b" class="hidden sm:block bg-gray-50 border border-gray-100 rounded-lg p-1 min-h-[140px]"></div>
                     
-                    <div v-for="day in calendarDaysCount" :key="day" class="rounded-lg p-1.5 min-h-[140px] flex flex-col justify-between bg-white shadow-sm transition-all" :class="checkHasData(day) ? 'border-2 border-yellow-400' : 'border border-gray-200'">
-                        <div class="flex items-center justify-between border-b border-gray-100 pb-1">
-                            <span class="font-black" :class="checkHasData(day) ? 'text-gray-900' : 'text-gray-400'">{{ calendarMonthLabel }}/{{ day }}</span>
-                            <div class="flex gap-1 text-xxs">
-                                <span class="px-1 py-0.2 rounded font-black border" :class="checkHasData(day) ? 'border-black dk-bg-yellow text-black' : 'border-gray-200 bg-gray-100 text-gray-400'">{{ getCalendarDayData(day, '2026') }}</span>
-                                <span class="px-1 py-0.2 rounded font-bold bg-black text-white">{{ getCalendarDayData(day, '2025') }}</span>
+                    <div v-for="day in calendarDaysCount" :key="day" class="rounded-xl sm:rounded-lg p-3 sm:p-1.5 sm:min-h-[140px] flex flex-col bg-white shadow-sm transition-all" :class="checkHasData(day) ? 'border-2 border-yellow-400' : 'border border-gray-200'">
+                        <div class="flex items-center justify-between border-b border-gray-100 pb-1.5 sm:pb-1 mb-2 sm:mb-0">
+                            <span class="font-black text-sm sm:text-xs" :class="checkHasData(day) ? 'text-gray-900' : 'text-gray-400'">
+                                <span class="sm:hidden font-normal text-gray-400 mr-1">週{{ ['日','一','二','三','四','五','六'][weekdayIndex(day)] }}</span>{{ calendarMonthLabel }}/{{ day }}
+                            </span>
+                            <div class="flex gap-1.5 sm:gap-1 text-xs sm:text-xxs">
+                                <span class="px-1.5 sm:px-1 py-0.5 sm:py-0.2 rounded font-black border" :class="checkHasData(day) ? 'border-black dk-bg-yellow text-black' : 'border-gray-200 bg-gray-100 text-gray-400'">{{ getCalendarDayData(day, '2026') }}</span>
+                                <span class="px-1.5 sm:px-1 py-0.5 sm:py-0.2 rounded font-bold bg-black text-white">{{ getCalendarDayData(day, '2025') }}</span>
                             </div>
                         </div>
-                        <div class="space-y-1 mt-1 overflow-y-auto max-h-[95px] custom-scrollbar text-xxs scale-95 origin-left" :class="checkHasData(day) ? '' : 'opacity-50'">
-                            <div v-for="city in cities" :key="city" class="border-b border-gray-50 pb-0.5">
-                                <div class="flex justify-between text-gray-500 font-bold bg-gray-50 px-1 text-xxs scale-90 origin-left"><span>{{ city }}</span></div>
-                                <div class="flex flex-col text-xxs scale-90 origin-left pl-1">
+                        <div class="grid grid-cols-2 sm:block gap-2 sm:gap-0 sm:space-y-1 sm:mt-1 sm:overflow-y-auto sm:max-h-[95px] custom-scrollbar text-xs sm:text-xxs sm:scale-95 sm:origin-left" :class="checkHasData(day) ? '' : 'opacity-50'">
+                            <div v-for="city in cities" :key="city" class="border border-gray-100 sm:border-0 sm:border-b sm:border-gray-50 rounded-lg sm:rounded-none p-1.5 sm:p-0 sm:pb-0.5">
+                                <div class="flex justify-between text-gray-500 font-bold bg-gray-50 px-1 rounded sm:rounded-none text-xs sm:text-xxs sm:scale-90 sm:origin-left"><span>{{ city }}</span></div>
+                                <div class="flex flex-col text-xs sm:text-xxs sm:scale-90 sm:origin-left sm:pl-1 mt-0.5 sm:mt-0">
                                     <div class="text-blue-600 font-bold flex justify-between"><span>2026:</span><div><span v-for="icon in getCalWeatherSlots(day, city, '2026')">{{ icon }}</span></div></div>
                                     <div class="text-gray-400 flex justify-between"><span>2025:</span><div><span v-for="icon in getCalWeatherSlots(day, city, '2025')">{{ icon }}</span></div></div>
                                 </div>
@@ -219,7 +221,7 @@
         createApp({
             setup() {
                 const globalTarget = 1600; const cities = ['台北', '新北', '桃園', '台中', '台南', '高雄']; const isLoading = ref(false);
-                const isCalendarExpanded = ref(true);
+                const isCalendarExpanded = ref(false);
 
                 const selectedWeek = ref('W28');
                 const weekMap = {
@@ -260,6 +262,7 @@
                 const calendarDaysCount = computed(() => daysInMonth[calendarMonth.value] || 31);
                 const calendarLeadingBlanks = computed(() => new Date(2026, parseInt(calendarMonth.value) - 1, 1).getDay());
                 const calendarMonthLabel = computed(() => parseInt(calendarMonth.value));
+                const weekdayIndex = (day) => (calendarLeadingBlanks.value + (day - 1)) % 7;
 
                 const base2025Bookings = { '07-01': 52, '07-02': 50, '07-03': 63, '07-04': 56, '07-05': 65, '07-06': 53, '07-07': 58, '07-08': 61, '07-09': 58, '07-10': 51, '07-11': 47, '07-12': 41, '07-13': 47, '07-14': 79, '07-15': 59, '07-16': 67, '07-17': 60, '07-18': 59, '07-19': 47, '07-20': 52, '07-21': 72, '07-22': 67, '07-23': 55, '07-24': 46, '07-25': 37, '07-26': 55, '07-27': 54, '07-28': 62, '07-29': 66, '07-30': 69, '07-31': 58, '08-01': 81, '08-02': 65, '08-03': 84, '08-04': 83, '08-05': 88, '08-06': 110, '08-07': 91, '08-08': 104, '08-09': 76, '08-10': 61, '08-11': 73, '08-12': 83, '08-13': 61, '08-14': 81, '08-15': 88, '08-16': 59, '08-17': 63, '08-18': 68, '08-19': 64, '08-20': 65, '08-21': 53, '08-22': 47, '08-23': 64, '08-24': 59, '08-25': 82, '08-26': 50, '08-27': 64, '08-28': 51, '08-29': 35, '08-30': 56, '08-31': 57, '09-01': 49, '09-02': 59.5, '09-03': 63, '09-04': 60, '09-05': 57, '09-06': 55, '09-07': 55, '09-08': 55, '09-09': 58, '09-10': 59, '09-11': 60, '09-12': 53, '09-13': 49, '09-14': 64, '09-15': 69, '09-16': 44, '09-17': 65, '09-18': 72, '09-19': 59, '09-20': 70, '09-21': 58, '09-22': 68, '09-23': 50, '09-24': 73, '09-25': 50, '09-26': 65, '09-27': 74, '09-28': 64, '09-29': 81, '09-30': 79, '10-01': 83, '10-02': 64, '10-03': 56, '10-04': 58, '10-05': 46, '10-06': 63, '10-07': 70, '10-08': 83, '10-09': 60, '10-10': 65, '10-11': 66, '10-12': 55, '10-13': 70, '10-14': 65, '10-15': 49, '10-16': 56, '10-17': 41, '10-18': 59, '10-19': 43, '10-20': 58, '10-21': 44, '10-22': 57, '10-23': 67, '10-24': 55, '10-25': 55, '10-26': 48, '10-27': 61, '10-28': 61, '10-29': 69, '10-30': 64, '10-31': 66, '11-01': 55, '11-02': 56, '11-03': 65, '11-04': 66, '11-05': 62, '11-06': 77, '11-07': 51, '11-08': 66, '11-09': 54, '11-10': 55, '11-11': 52, '11-12': 57, '11-13': 55, '11-14': 72, '11-15': 72, '11-16': 74, '11-17': 74, '11-18': 59, '11-19': 66, '11-20': 60, '11-21': 61, '11-22': 55, '11-23': 69, '11-24': 77, '11-25': 57, '11-26': 56, '11-27': 52, '11-28': 57, '11-29': 64, '11-30': 70, '12-01': 56, '12-02': 75, '12-03': 55, '12-04': 53, '12-05': 44, '12-06': 59, '12-07': 65, '12-08': 67, '12-09': 61, '12-10': 58, '12-11': 64, '12-12': 54, '12-13': 64, '12-14': 74, '12-15': 61, '12-16': 74, '12-17': 62, '12-18': 76, '12-19': 71, '12-20': 85, '12-21': 60, '12-22': 96, '12-23': 94, '12-24': 79, '12-25': 61, '12-26': 82, '12-27': 57, '12-28': 75, '12-29': 81, '12-30': 64, '12-31': 61 };
 
@@ -650,7 +653,7 @@
                     fetchCloudData();
                 });
 
-                return { cities, isLoading, isCalendarExpanded, selectedWeek, updateWeeklyChart, selectedMonth, updateMonthlyChart, onChartMonthChange, calendarMonth, calendarDaysCount, calendarLeadingBlanks, calendarMonthLabel, historyData, totalOnlineBooking, totalCancelCount, targetProgressThreshold, monthYoY, monthMoM, cumulativePrevMonthBooking, cancelRate, yesterdayAchievementRate, progressGapPercent, checkHasData, getCalendarDayData, getCalWeatherSlots, latestDayBooking, latestDayCancel, latestLastYearDayBooking, formattedLatestDay, cumulativeLastYearBooking, fetchCloudData };
+                return { cities, isLoading, isCalendarExpanded, selectedWeek, updateWeeklyChart, selectedMonth, updateMonthlyChart, onChartMonthChange, calendarMonth, calendarDaysCount, calendarLeadingBlanks, calendarMonthLabel, weekdayIndex, historyData, totalOnlineBooking, totalCancelCount, targetProgressThreshold, monthYoY, monthMoM, cumulativePrevMonthBooking, cancelRate, yesterdayAchievementRate, progressGapPercent, checkHasData, getCalendarDayData, getCalWeatherSlots, latestDayBooking, latestDayCancel, latestLastYearDayBooking, formattedLatestDay, cumulativeLastYearBooking, fetchCloudData };
             }
         }).mount('#app');
     </script>

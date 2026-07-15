@@ -223,7 +223,6 @@
                 const globalTarget = 1600; const cities = ['台北', '新北', '桃園', '台中', '台南', '高雄']; const isLoading = ref(false);
                 const isCalendarExpanded = ref(false);
 
-                const selectedWeek = ref('W28');
                 const weekMap = {
                     'W26': ['06-22', '06-23', '06-24', '06-25', '06-26', '06-27', '06-28'],
                     'W27': ['06-29', '06-30', '07-01', '07-02', '07-03', '07-04', '07-05'],
@@ -254,6 +253,20 @@
                     'W52': ['12-21', '12-22', '12-23', '12-24', '12-25', '12-26', '12-27'],
                     'W53': ['12-28', '12-29', '12-30', '12-31', '01-01', '01-02', '01-03']
                 };
+
+                const findWeekForDate = (dateKey) => {
+                    for (const wk in weekMap) {
+                        if (weekMap[wk].includes(dateKey)) return wk;
+                    }
+                    return null;
+                };
+                const getDefaultWeek = () => {
+                    const yesterday = new Date();
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    const key = `${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+                    return findWeekForDate(key) || 'W28';
+                };
+                const selectedWeek = ref(getDefaultWeek());
 
                 const selectedMonth = ref('07');
                 const daysInMonth = { '07': 31, '08': 31, '09': 30, '10': 31, '11': 30, '12': 31 };
